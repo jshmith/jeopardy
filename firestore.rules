@@ -1,0 +1,120 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function isHost(roomCode) {
+      return signedIn() &&
+        get(/databases/$(database)/documents/games/$(roomCode)).data.hostUid == request.auth.uid;
+    }
+
+    function isPlayer(roomCode) {
+      return signedIn() &&
+        exists(/databases/$(database)/documents/games/$(roomCode)/players/$(request.auth.uid));
+    }
+
+    // ---- Board template library ----
+    match /boards/{boardId} {
+      allow read: if signedIn() && resource.data.ownerUid == request.auth.uid;
+      allow create: if signedIn() && request.resource.data.ownerUid == request.auth.uid;
+      allow update, delete: if signedIn() && resource.data.ownerUid == request.auth.uid;
+    }
+
+    // ---- Live game ----
+    match /games/{roomCode} {
+      // Readable by any signed-in user, not just the host/joined players: the room
+      // code is the real access control here, and this public doc never contains
+      // unrevealed clue text/answers (that's private/board) — so there's nothing
+      // sensitive to gate further. This also lets a not-yet-joined player read the
+      // doc as part of their own join transaction, and lets a client check whether a
+      // room code is free (doc doesn't exist yet) when generating a new one.
+      allow read: if signedIn();
+
+      allow create: if signedIn() && request.resource.data.hostUid == request.auth.uid;
+
+      // Host drives every phase transition, clue reveal, scoring, and buzzer reopen.
+      allow update: if isHost(roomCode) ||
+        // Any joined player may attempt to buzz in: the write may touch ONLY the
+        // `buzz` map, and may only claim the win for themselves.
+        (isPlayer(roomCode) &&
+          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['buzz']) &&
+          request.resource.data.buzz.token == resource.data.buzz.token &&
+          resource.data.buzz.isOpen == true &&
+          resource.data.buzz.winnerId == null &&
+          request.resource.data.buzz.winnerId == request.auth.uid &&
+          request.resource.data.buzz.isOpen == false &&
+          request.resource.data.buzz.lockedOutPlayerIds == resource.data.buzz.lockedOutPlayerIds) ||
+        // The controlling player may submit their Daily Double wager exactly once.
+        (isPlayer(roomCode) &&
+          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['dailyDouble']) &&
+          resource.data.dailyDouble.controllingPlayerId == request.auth.uid &&
+          resource.data.dailyDouble.wagerSubmitted == false &&
+          request.resource.data.dailyDouble.controllingPlayerId == request.auth.uid &&
+          request.resource.data.dailyDouble.wagerSubmitted == true &&
+          request.resource.data.dailyDouble.wager >= 5 &&
+          request.resource.data.dailyDouble.wager <= (
+            get(/databases/$(database)/documents/games/$(roomCode)/players/$(request.auth.uid)).data.score >
+              (resource.data.round == 'double' ? 2000 : 1000)
+            ? get(/databases/$(database)/documents/games/$(roomCode)/players/$(request.auth.uid)).data.score
+            : (resource.data.round == 'double' ? 2000 : 1000)
+          )) ||
+        // A newly-joining player increments the player counter by exactly one, as part
+        // of their join transaction (they aren't in `players/` yet, so isPlayer() can't
+        // be used to scope this — the players/{playerId} create rule's own playerCount
+        // check is what actually enforces the 3-player cap).
+        (signedIn() &&
+          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['playerCount', 'updatedAt']) &&
+          resource.data.playerCount < 3 &&
+          request.resource.data.playerCount == resource.data.playerCount + 1);
+
+      allow delete: if isHost(roomCode);
+
+      // Full board content — only the host's client ever reads this.
+      match /private/board {
+        allow read, write: if isHost(roomCode);
+      }
+
+      match /players/{playerId} {
+        // Same reasoning as the game doc: scores/names are public within a room, and
+        // a joining player must be able to read this collection (including their own
+        // not-yet-existent doc) as part of their join transaction.
+        allow read: if signedIn();
+
+        allow create: if signedIn() && request.auth.uid == playerId &&
+          get(/databases/$(database)/documents/games/$(roomCode)).data.playerCount < 3;
+
+        // Score adjustments are host-only; a player may only touch their own
+        // presence fields.
+        allow update: if isHost(roomCode) ||
+          (signedIn() && request.auth.uid == playerId &&
+            request.resource.data.diff(resource.data).affectedKeys().hasOnly(['connected', 'lastSeenAt']));
+
+        allow delete: if isHost(roomCode);
+      }
+
+      match /finalWagers/{playerId} {
+        allow read: if isHost(roomCode) || (signedIn() && request.auth.uid == playerId);
+        allow create: if signedIn() && request.auth.uid == playerId &&
+          get(/databases/$(database)/documents/games/$(roomCode)).data.phase == 'final_wagering' &&
+          request.resource.data.value >= 0 &&
+          request.resource.data.value <= (
+            get(/databases/$(database)/documents/games/$(roomCode)/players/$(playerId)).data.score > 0
+            ? get(/databases/$(database)/documents/games/$(roomCode)/players/$(playerId)).data.score
+            : 0
+          );
+        allow update, delete: if false;
+      }
+
+      match /finalAnswers/{playerId} {
+        allow read: if isHost(roomCode) || (signedIn() && request.auth.uid == playerId);
+        allow create: if signedIn() && request.auth.uid == playerId &&
+          get(/databases/$(database)/documents/games/$(roomCode)).data.phase == 'final_answering';
+        allow update, delete: if false;
+      }
+    }
+  }
+}
