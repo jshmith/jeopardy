@@ -28,7 +28,7 @@ export function PlayerJoin() {
       setLastRoom({ roomCode: code, role: 'player' })
       navigate(`/play/${code}`)
     } else if (result.reason === 'full') {
-      setError('That game already has 3 players.')
+      setError('That game already has 4 players.')
     } else {
       setError('No game found with that room code.')
     }

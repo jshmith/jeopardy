@@ -12,7 +12,7 @@ import type { Board, BoardMetaCategory, Game } from '../../types/game'
 
 const ROOM_CODE_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
 const ROOM_CODE_LENGTH = 6
-const MAX_PLAYERS = 3
+const MAX_PLAYERS = 4
 
 function randomRoomCode(): string {
   let code = ''

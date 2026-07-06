@@ -65,10 +65,10 @@ service cloud.firestore {
         // A newly-joining player increments the player counter by exactly one, as part
         // of their join transaction (they aren't in `players/` yet, so isPlayer() can't
         // be used to scope this — the players/{playerId} create rule's own playerCount
-        // check is what actually enforces the 3-player cap).
+        // check is what actually enforces the 4-player cap).
         (signedIn() &&
           request.resource.data.diff(resource.data).affectedKeys().hasOnly(['playerCount', 'updatedAt']) &&
-          resource.data.playerCount < 3 &&
+          resource.data.playerCount < 4 &&
           request.resource.data.playerCount == resource.data.playerCount + 1);
 
       allow delete: if isHost(roomCode);
@@ -85,7 +85,7 @@ service cloud.firestore {
         allow read: if signedIn();
 
         allow create: if signedIn() && request.auth.uid == playerId &&
-          get(/databases/$(database)/documents/games/$(roomCode)).data.playerCount < 3;
+          get(/databases/$(database)/documents/games/$(roomCode)).data.playerCount < 4;
 
         // Score adjustments are host-only; a player may only touch their own
         // presence fields.
