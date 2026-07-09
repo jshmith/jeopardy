@@ -50,6 +50,7 @@ export async function createGame(hostUid: string, boardId: string): Promise<stri
       double: toBoardMeta(board.doubleCategories),
     },
     currentClue: null,
+    videoSync: null,
     buzz: {
       token: uuidv4(),
       isOpen: false,

@@ -15,12 +15,15 @@ export function Home() {
         Jeopardy!
       </h1>
 
-      <div className="relative flex gap-4">
+      <div className="relative flex flex-wrap justify-center gap-4">
         <Link to="/host" className={`${btnPrimary} px-8 py-4 hover:-translate-y-0.5`}>
           Host a game
         </Link>
         <Link to="/join" className={`${btnSecondary} px-8 py-4 hover:-translate-y-0.5`}>
           Join a game
+        </Link>
+        <Link to="/host/boards" className={`${btnSecondary} px-8 py-4 hover:-translate-y-0.5`}>
+          My Boards
         </Link>
       </div>
 

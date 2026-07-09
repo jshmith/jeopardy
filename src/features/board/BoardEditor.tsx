@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useNavigate, useParams, Link } from 'react-router-dom'
 import { useAuthUid } from '../../lib/useAuthUid'
 import { btnPrimary, inputBase } from '../../lib/uiClasses'
@@ -8,6 +8,10 @@ import { ClueEditor } from './ClueEditor'
 import type { Board, BoardCategory, BoardClue, FinalJeopardyClue } from '../../types/game'
 
 type EditableBoard = Omit<Board, 'id' | 'ownerUid' | 'createdAt' | 'updatedAt'>
+
+const AUTOSAVE_DELAY_MS = 1000
+
+type SaveStatus = 'idle' | 'pending' | 'saving' | 'saved' | 'error'
 
 export function BoardEditor() {
   const { boardId } = useParams<{ boardId: string }>()
@@ -19,7 +23,9 @@ export function BoardEditor() {
   const [editing, setEditing] = useState<{ round: 'single' | 'double'; catIndex: number; clueIndex: number } | null>(
     null,
   )
-  const [saving, setSaving] = useState(false)
+  const [status, setStatus] = useState<SaveStatus>('idle')
+  const skipNextAutosave = useRef(true)
+  const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   useEffect(() => {
     if (!uid || !boardId) return
@@ -30,6 +36,8 @@ export function BoardEditor() {
     }
 
     getBoard(boardId).then((b) => {
+      skipNextAutosave.current = true
+      setStatus('idle')
       if (b) {
         const { id: _id, ownerUid: _o, createdAt: _c, updatedAt: _u, ...rest } = b
         setBoard(rest)
@@ -38,6 +46,43 @@ export function BoardEditor() {
       }
     })
   }, [uid, boardId, navigate])
+
+  const performSave = useCallback(
+    async (current: EditableBoard) => {
+      if (!uid || !boardId) return
+      setStatus('saving')
+      try {
+        await saveBoard(boardId, uid, current)
+        setStatus('saved')
+      } catch {
+        setStatus('error')
+      }
+    },
+    [uid, boardId],
+  )
+
+  useEffect(() => {
+    if (!board || !uid || !boardId || boardId === 'new') return
+    if (skipNextAutosave.current) {
+      skipNextAutosave.current = false
+      return
+    }
+
+    setStatus('pending')
+    saveTimeoutRef.current = setTimeout(() => {
+      void performSave(board)
+    }, AUTOSAVE_DELAY_MS)
+
+    return () => {
+      if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current)
+    }
+  }, [board, uid, boardId, performSave])
+
+  async function handleManualSave() {
+    if (!board) return
+    if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current)
+    await performSave(board)
+  }
 
   if (!board || !boardId || boardId === 'new') {
     return (
@@ -73,16 +118,6 @@ export function BoardEditor() {
     setBoard((prev) => (prev ? { ...prev, finalJeopardy: { ...prev.finalJeopardy, ...patch } } : prev))
   }
 
-  async function handleSave() {
-    if (!uid || !board || !boardId) return
-    setSaving(true)
-    try {
-      await saveBoard(boardId, uid, board)
-    } finally {
-      setSaving(false)
-    }
-  }
-
   return (
     <div className="min-h-screen bg-jeopardy-navy p-6 text-white">
       <div className="mx-auto max-w-6xl">
@@ -93,10 +128,22 @@ export function BoardEditor() {
           >
             &larr; Back to boards
           </Link>
-          <button onClick={handleSave} disabled={saving} className={`${btnPrimary} flex items-center gap-2`}>
-            {saving && <Spinner className="h-4 w-4" />}
-            {saving ? 'Saving…' : 'Save board'}
-          </button>
+          <div className="flex items-center gap-3">
+            <span className="text-xs text-white/40">
+              {status === 'pending' && 'Unsaved changes'}
+              {status === 'saving' && 'Saving…'}
+              {status === 'saved' && 'All changes saved'}
+              {status === 'error' && 'Failed to save'}
+            </span>
+            <button
+              onClick={handleManualSave}
+              disabled={status === 'saving'}
+              className={`${btnPrimary} flex items-center gap-2`}
+            >
+              {status === 'saving' && <Spinner className="h-4 w-4" />}
+              {status === 'error' ? 'Retry save' : status === 'saving' ? 'Saving…' : 'Save now'}
+            </button>
+          </div>
         </div>
 
         <input
@@ -143,6 +190,14 @@ export function BoardEditor() {
                         DD
                       </span>
                     )}
+                    {clue.mode === 'host_control' && !clue.isDailyDouble && (
+                      <span
+                        title="Host's choice — no buzzers"
+                        className="absolute right-1.5 top-1.5 rounded bg-purple-400/90 px-1 text-[9px] font-bold text-jeopardy-blue-dark"
+                      >
+                        HC
+                      </span>
+                    )}
                     {!clue.text && (
                       <span className="absolute left-1.5 top-1.5 text-[9px] text-white/40">empty</span>
                     )}
@@ -171,11 +226,12 @@ export function BoardEditor() {
               />
             </label>
             <label className="block text-sm text-white/70">
-              Image URL (optional)
+              Image or video URL (optional)
               <input
                 className={`mt-1 w-full ${inputBase}`}
                 value={board.finalJeopardy.imageUrl ?? ''}
                 onChange={(e) => updateFinal({ imageUrl: e.target.value.trim() ? e.target.value : null })}
+                placeholder="https://... (image, YouTube link, or .mp4)"
               />
             </label>
             <label className="block text-sm text-white/70">

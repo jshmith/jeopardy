@@ -2,8 +2,8 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { firebaseConfigError } from './lib/firebase'
 import { card } from './lib/uiClasses'
 import { Home } from './features/home/Home'
-import { HostHome } from './features/home/HostHome'
 import { BoardList } from './features/board/BoardList'
+import { HostGamePicker } from './features/host/HostGamePicker'
 import { BoardEditor } from './features/board/BoardEditor'
 import { NewGame } from './features/host/NewGame'
 import { HostControl } from './features/host/HostControl'
@@ -28,7 +28,7 @@ function App() {
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<Home />} />
-        <Route path="/host" element={<HostHome />} />
+        <Route path="/host" element={<HostGamePicker />} />
         <Route path="/host/boards" element={<BoardList />} />
         <Route path="/host/boards/:boardId" element={<BoardEditor />} />
         <Route path="/host/new-game/:boardId" element={<NewGame />} />

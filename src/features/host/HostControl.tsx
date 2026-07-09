@@ -7,6 +7,7 @@ import { ClueDisplay } from '../../components/ClueDisplay'
 import { Spinner } from '../../components/Spinner'
 import { btnCorrect, btnIncorrect, btnPrimary, btnQuiet, inputBase } from '../../lib/uiClasses'
 import {
+  awardHostControlClue,
   backToBoard,
   forceRevealAnswer,
   judgeBuzzIn,
@@ -24,6 +25,29 @@ import type { BoardClue, PrivateBoard, CurrentClue } from '../../types/game'
 function clueFromBoard(board: PrivateBoard, clue: CurrentClue): BoardClue {
   const category = (clue.round === 'double' ? board.doubleCategories : board.categories)[clue.categoryIndex]
   return category.clues[clue.clueIndex]
+}
+
+/** Host-only answer peek: blurred until hovered, click toggles for touch screens. */
+function PeekAnswer({ answer }: { answer: string }) {
+  const [pinned, setPinned] = useState(false)
+  return (
+    <button
+      onClick={() => setPinned((p) => !p)}
+      title="Hover or tap to peek at the answer"
+      className="group w-full max-w-xl rounded-xl border border-white/10 bg-white/5 px-5 py-3 text-center transition hover:border-white/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-jeopardy-gold/50"
+    >
+      <span className="mb-1 block text-[10px] font-semibold uppercase tracking-wider text-white/40">
+        Answer — hover to peek
+      </span>
+      <span
+        className={`block text-lg text-jeopardy-gold transition duration-150 ${
+          pinned ? '' : 'select-none blur-md group-hover:blur-none'
+        }`}
+      >
+        {answer || '(no answer set)'}
+      </span>
+    </button>
+  )
 }
 
 export function HostControl() {
@@ -193,7 +217,9 @@ function HostClueView({
 
   return (
     <div className="flex flex-col items-center gap-5">
-      <ClueDisplay clue={clue} />
+      <ClueDisplay clue={clue} video={{ role: 'host', roomCode }} />
+
+      {phase !== 'answer_revealed' && <PeekAnswer answer={answerText} />}
 
       {phase === 'answer_revealed' ? (
         <button onClick={() => backToBoard(roomCode)} className={btnPrimary}>
@@ -224,6 +250,27 @@ function HostClueView({
               Incorrect
             </button>
           </div>
+        </div>
+      ) : phase === 'clue_revealed' && clue.mode === 'host_control' ? (
+        <div className="flex flex-col items-center gap-3">
+          <p className="text-white/80">
+            Host&apos;s choice — award <span className="text-jeopardy-gold">${clue.value}</span> to:
+          </p>
+          <div className="flex flex-wrap justify-center gap-2">
+            {players.map((p) => (
+              <button
+                key={p.uid}
+                onClick={() => awardHostControlClue(roomCode, p.uid, clue.value, answerText)}
+                className={btnCorrect}
+              >
+                {p.displayName}
+              </button>
+            ))}
+          </div>
+          {players.length === 0 && <p className="text-sm text-white/50">No players have joined yet.</p>}
+          <button onClick={() => forceRevealAnswer(roomCode, answerText)} className={btnQuiet}>
+            No one — reveal answer &amp; move on
+          </button>
         </div>
       ) : phase === 'clue_revealed' ? (
         <button onClick={() => openBuzzer(roomCode)} className={btnPrimary}>

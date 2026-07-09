@@ -24,12 +24,18 @@ export type GamePhase =
 
 // ---- Board template (host's reusable library) ----
 
+/** How a clue plays out: players race to buzz in, or the host directly awards a player. */
+export type ClueMode = 'standard' | 'host_control'
+
 export type BoardClue = {
   value: number
   text: string
+  /** Media URL: image, YouTube link, or direct video file — detected at render time. */
   imageUrl: string | null
   answer: string
   isDailyDouble: boolean
+  /** Absent on boards saved before clue modes existed — treat as 'standard'. */
+  mode?: ClueMode
 }
 
 export type BoardCategory = {
@@ -40,6 +46,7 @@ export type BoardCategory = {
 export type FinalJeopardyClue = {
   category: string
   text: string
+  /** Media URL: image, YouTube link, or direct video file — detected at render time. */
   imageUrl: string | null
   answer: string
 }
@@ -77,7 +84,17 @@ export type CurrentClue = {
   text: string
   imageUrl: string | null
   isDailyDouble: boolean
+  mode: ClueMode
   revealedAnswer: string | null
+}
+
+/** Host-driven video playback state; viewers' players follow it. */
+export type VideoSyncState = {
+  status: 'playing' | 'paused'
+  /** Video position (seconds) when this state was written. */
+  time: number
+  /** Host wall-clock ms when written; viewers extrapolate position while playing. */
+  setAtMs: number
 }
 
 export type BuzzState = {
@@ -109,6 +126,8 @@ export type Game = {
     double: BoardMetaCategory[]
   }
   currentClue: CurrentClue | null
+  /** Absent on games created before video sync existed — treat as null. */
+  videoSync?: VideoSyncState | null
   buzz: BuzzState
   controlPlayerId: string | null
   dailyDouble: DailyDoubleState | null

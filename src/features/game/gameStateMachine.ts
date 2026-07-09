@@ -1,7 +1,7 @@
 import { doc, increment, runTransaction, serverTimestamp, updateDoc } from 'firebase/firestore'
 import { v4 as uuidv4 } from 'uuid'
 import { db } from '../../lib/firebase'
-import type { BoardMetaCategory, ClueState, PrivateBoard } from '../../types/game'
+import type { BoardMetaCategory, ClueState, PrivateBoard, VideoSyncState } from '../../types/game'
 
 function gameRef(roomCode: string) {
   return doc(db, 'games', roomCode)
@@ -47,6 +47,7 @@ export async function revealClue(
       text: clue.text,
       imageUrl: clue.imageUrl,
       isDailyDouble: clue.isDailyDouble,
+      mode: clue.mode ?? 'standard',
       revealedAnswer: null,
     },
     [`boardMeta.${round}`]: withClueState(currentRoundMeta, categoryIndex, clueIndex, 'revealed'),
@@ -55,8 +56,14 @@ export async function revealClue(
       ? { controllingPlayerId: null, wager: null, wagerSubmitted: false }
       : null,
     buzz: { token: uuidv4(), isOpen: false, winnerId: null, winnerAt: null, lockedOutPlayerIds: [] },
+    videoSync: null,
     updatedAt: serverTimestamp(),
   })
+}
+
+/** Host's video player publishes its play/pause/seek state; viewers follow it. */
+export async function setVideoSync(roomCode: string, state: VideoSyncState) {
+  await updateDoc(gameRef(roomCode), { videoSync: state })
 }
 
 export async function setDailyDoubleController(roomCode: string, playerId: string) {
@@ -124,6 +131,36 @@ export async function judgeBuzzIn(
   })
 }
 
+/** Host-control clue: the host directly awards the money to a player (no buzzing).
+ * Awards `value`, gives that player board control, and reveals the answer. */
+export async function awardHostControlClue(
+  roomCode: string,
+  playerId: string,
+  value: number,
+  answer: string,
+) {
+  await runTransaction(db, async (tx) => {
+    const snap = await tx.get(gameRef(roomCode))
+    if (!snap.exists()) return
+    const game = snap.data()
+    if (!game.currentClue || game.phase !== 'clue_revealed') return // already resolved / stale click
+
+    tx.update(playerRef(roomCode, playerId), { score: increment(value) })
+    tx.update(gameRef(roomCode), {
+      controlPlayerId: playerId,
+      phase: 'answer_revealed',
+      'currentClue.revealedAnswer': answer,
+      [`boardMeta.${game.currentClue.round}`]: withClueState(
+        game.boardMeta[game.currentClue.round],
+        game.currentClue.categoryIndex,
+        game.currentClue.clueIndex,
+        'answered',
+      ),
+      buzz: { ...game.buzz, isOpen: false, winnerId: null },
+    })
+  })
+}
+
 /** Judge a Daily Double answer for the controlling player — resolves immediately either way. */
 export async function judgeDailyDouble(
   roomCode: string,
@@ -174,7 +211,7 @@ export async function forceRevealAnswer(roomCode: string, answer: string) {
 }
 
 export async function backToBoard(roomCode: string) {
-  await updateDoc(gameRef(roomCode), { currentClue: null, dailyDouble: null, phase: 'board' })
+  await updateDoc(gameRef(roomCode), { currentClue: null, dailyDouble: null, phase: 'board', videoSync: null })
 }
 
 export async function setRound(roomCode: string, round: 'single' | 'double') {
@@ -202,6 +239,7 @@ export async function moveToFinalAnswering(roomCode: string, board: PrivateBoard
       isDailyDouble: false,
       revealedAnswer: null,
     },
+    videoSync: null,
     finalAnswerDeadline: Date.now() + durationMs,
   })
 }

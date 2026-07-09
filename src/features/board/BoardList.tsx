@@ -1,15 +1,22 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuthUid } from '../../lib/useAuthUid'
-import { btnPrimary, btnQuiet, card, cardHover } from '../../lib/uiClasses'
+import { formatUpdated } from '../../lib/formatUpdated'
+import { btnPrimary, btnQuiet, btnSecondary, card, cardHover, inputBase } from '../../lib/uiClasses'
 import { Spinner } from '../../components/Spinner'
-import { deleteBoard, listBoards } from './boardApi'
+import { createBoardFromData, deleteBoard, listBoards, renameBoard } from './boardApi'
+import { downloadBoardAsFile, parseImportedBoard } from './boardImportExport'
 import type { Board } from '../../types/game'
 
 export function BoardList() {
   const uid = useAuthUid()
   const navigate = useNavigate()
   const [boards, setBoards] = useState<Board[] | null>(null)
+  const [importing, setImporting] = useState(false)
+  const [renamingId, setRenamingId] = useState<string | null>(null)
+  const [renameValue, setRenameValue] = useState('')
+  const [confirmingDeleteId, setConfirmingDeleteId] = useState<string | null>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     if (!uid) return
@@ -17,22 +24,70 @@ export function BoardList() {
   }, [uid])
 
   async function handleDelete(boardId: string) {
-    if (!confirm('Delete this board? This cannot be undone.')) return
+    setConfirmingDeleteId(null)
     await deleteBoard(boardId)
     setBoards((prev) => prev?.filter((b) => b.id !== boardId) ?? null)
+  }
+
+  function startRename(b: Board) {
+    setRenamingId(b.id)
+    setRenameValue(b.name)
+  }
+
+  async function commitRename(boardId: string) {
+    setRenamingId(null)
+    const name = renameValue.trim()
+    if (!name) return
+    await renameBoard(boardId, name)
+    setBoards((prev) => prev?.map((b) => (b.id === boardId ? { ...b, name } : b)) ?? null)
+  }
+
+  async function handleImportFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    e.target.value = ''
+    if (!file || !uid) return
+
+    setImporting(true)
+    try {
+      const text = await file.text()
+      const data = parseImportedBoard(text)
+      const id = await createBoardFromData(uid, data)
+      navigate(`/host/boards/${id}`)
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Failed to import board.')
+    } finally {
+      setImporting(false)
+    }
   }
 
   return (
     <div className="min-h-screen bg-jeopardy-navy p-6 text-white">
       <div className="mx-auto max-w-3xl">
         <div className="mb-8 flex items-center justify-between">
-          <Link to="/host" className="text-sm text-white/60 transition hover:text-jeopardy-gold">
-            &larr; Host home
+          <Link to="/" className="text-sm text-white/60 transition hover:text-jeopardy-gold">
+            &larr; Home
           </Link>
           <h1 className="font-jeopardy text-2xl text-jeopardy-gold">My Boards</h1>
-          <button onClick={() => navigate('/host/boards/new')} className={btnPrimary}>
-            + New board
-          </button>
+          <div className="flex gap-2">
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="application/json"
+              className="hidden"
+              onChange={handleImportFile}
+            />
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              disabled={importing}
+              className={`${btnSecondary} flex items-center gap-2`}
+            >
+              {importing && <Spinner className="h-4 w-4" />}
+              {importing ? 'Importing…' : 'Import'}
+            </button>
+            <button onClick={() => navigate('/host/boards/new')} className={btnPrimary}>
+              + New board
+            </button>
+          </div>
         </div>
 
         {!boards ? (
@@ -50,23 +105,77 @@ export function BoardList() {
                 key={b.id}
                 className={`animate-fade-in-up flex items-center justify-between p-4 ${card} ${cardHover}`}
               >
-                <Link to={`/host/boards/${b.id}`} className="font-semibold text-white transition hover:text-jeopardy-gold">
-                  {b.name}
-                </Link>
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => navigate(`/host/new-game/${b.id}`)}
-                    className="rounded-lg bg-jeopardy-gold px-3 py-1.5 text-sm font-semibold text-jeopardy-blue-dark shadow transition hover:brightness-105 active:scale-[0.98]"
-                  >
-                    Host game
-                  </button>
-                  <button onClick={() => handleDelete(b.id)} className={btnQuiet}>
-                    Delete
-                  </button>
+                <div className="flex min-w-0 flex-col">
+                  {renamingId === b.id ? (
+                    <input
+                      className={`${inputBase} px-2 py-1 font-semibold`}
+                      value={renameValue}
+                      autoFocus
+                      onChange={(e) => setRenameValue(e.target.value)}
+                      onBlur={() => commitRename(b.id)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') commitRename(b.id)
+                        if (e.key === 'Escape') setRenamingId(null)
+                      }}
+                    />
+                  ) : (
+                    <span className="flex items-center gap-2">
+                      <Link
+                        to={`/host/boards/${b.id}`}
+                        className="truncate font-semibold text-white transition hover:text-jeopardy-gold"
+                      >
+                        {b.name}
+                      </Link>
+                      <button
+                        onClick={() => startRename(b)}
+                        title="Rename board"
+                        className="rounded p-1 text-white/40 transition hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30"
+                      >
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" />
+                        </svg>
+                      </button>
+                    </span>
+                  )}
+                  {formatUpdated(b) && (
+                    <span className="mt-0.5 text-xs text-white/35">Updated {formatUpdated(b)}</span>
+                  )}
+                </div>
+                <div className="flex shrink-0 items-center gap-2">
+                  {confirmingDeleteId === b.id ? (
+                    <>
+                      <span className="text-sm text-white/60">Delete this board?</span>
+                      <button
+                        onClick={() => handleDelete(b.id)}
+                        className="rounded-lg bg-red-600/90 px-3 py-1.5 text-sm font-semibold text-white transition hover:bg-red-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400/70"
+                      >
+                        Delete
+                      </button>
+                      <button onClick={() => setConfirmingDeleteId(null)} className={btnQuiet}>
+                        Cancel
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <button onClick={() => navigate(`/host/boards/${b.id}`)} className={btnQuiet}>
+                        Edit
+                      </button>
+                      <button onClick={() => downloadBoardAsFile(b)} className={btnQuiet}>
+                        Export
+                      </button>
+                      <button onClick={() => setConfirmingDeleteId(b.id)} className={btnQuiet}>
+                        Delete
+                      </button>
+                    </>
+                  )}
                 </div>
               </li>
             ))}
           </ul>
+        )}
+
+        {uid && (
+          <p className="mt-8 text-center text-xs text-white/20 select-all">Signed in as: {uid}</p>
         )}
       </div>
     </div>

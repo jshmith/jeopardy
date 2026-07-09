@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useNavigate, useSearchParams } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuthUid } from '../../lib/useAuthUid'
 import { setLastRoom } from '../../lib/localRoom'
 import { btnPrimary, card, inputBase } from '../../lib/uiClasses'
@@ -35,7 +35,7 @@ export function PlayerJoin() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-jeopardy-navy p-4 text-white">
+    <div className="flex min-h-screen flex-col items-center justify-center gap-5 bg-jeopardy-navy p-4 text-white">
       <form onSubmit={handleSubmit} className={`animate-fade-in-up w-full max-w-sm p-8 ${card}`}>
         <h1 className="mb-6 text-center font-jeopardy text-3xl text-jeopardy-gold">Join Game</h1>
 
@@ -75,6 +75,9 @@ export function PlayerJoin() {
           {joining ? 'Joining…' : 'Join'}
         </button>
       </form>
+      <Link to="/" className="text-sm text-white/40 transition hover:text-white/70">
+        &larr; Back to home
+      </Link>
     </div>
   )
 }

@@ -78,8 +78,15 @@ export function PlayerView() {
           <p className="animate-fade-in-up text-center text-white/70">Daily Double! Waiting on the wager…</p>
         ) : (
           <div className="flex flex-col items-center gap-6">
-            <ClueDisplay clue={clue} />
-            {game.phase === 'buzzer_open' && <BuzzerButton roomCode={roomCode} playerId={uid} buzz={game.buzz} />}
+            <ClueDisplay clue={clue} video={{ role: 'viewer', sync: game.videoSync ?? null }} />
+            {(game.phase === 'clue_revealed' || game.phase === 'buzzer_open') &&
+              (clue.mode === 'host_control' ? (
+                <p className="animate-fade-in-up text-center text-white/60">
+                  No buzzers on this one — the host picks who gets the money.
+                </p>
+              ) : (
+                <BuzzerButton roomCode={roomCode} playerId={uid} buzz={game.buzz} />
+              ))}
           </div>
         )}
       </div>

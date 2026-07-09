@@ -28,6 +28,7 @@ function blankCategories(values: number[]): BoardCategory[] {
       imageUrl: null,
       answer: '',
       isDailyDouble: false,
+      mode: 'standard' as const,
     })),
   }))
 }
@@ -64,6 +65,20 @@ export async function createBoard(ownerUid: string): Promise<string> {
   return ref.id
 }
 
+export async function createBoardFromData(
+  ownerUid: string,
+  data: Omit<Board, 'id' | 'ownerUid' | 'createdAt' | 'updatedAt'>,
+): Promise<string> {
+  const ref = doc(collection(db, 'boards'))
+  await setDoc(ref, {
+    ownerUid,
+    ...data,
+    createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp(),
+  })
+  return ref.id
+}
+
 export async function saveBoard(
   boardId: string,
   ownerUid: string,
@@ -74,6 +89,10 @@ export async function saveBoard(
     { ownerUid, ...data, updatedAt: serverTimestamp() },
     { merge: true },
   )
+}
+
+export async function renameBoard(boardId: string, name: string): Promise<void> {
+  await setDoc(doc(db, 'boards', boardId), { name, updatedAt: serverTimestamp() }, { merge: true })
 }
 
 export async function deleteBoard(boardId: string): Promise<void> {

@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { btnPrimary, btnQuiet, inputBase } from '../../lib/uiClasses'
-import type { BoardClue } from '../../types/game'
+import type { BoardClue, ClueMode } from '../../types/game'
 
 type Props = {
   clue: BoardClue
@@ -13,6 +13,7 @@ export function ClueEditor({ clue, onSave, onClose }: Props) {
   const [imageUrl, setImageUrl] = useState(clue.imageUrl ?? '')
   const [answer, setAnswer] = useState(clue.answer)
   const [isDailyDouble, setIsDailyDouble] = useState(clue.isDailyDouble)
+  const [mode, setMode] = useState<ClueMode>(clue.mode ?? 'standard')
 
   function handleSave() {
     onSave({
@@ -21,6 +22,7 @@ export function ClueEditor({ clue, onSave, onClose }: Props) {
       imageUrl: imageUrl.trim() ? imageUrl.trim() : null,
       answer: answer.trim(),
       isDailyDouble,
+      mode,
     })
     onClose()
   }
@@ -41,12 +43,12 @@ export function ClueEditor({ clue, onSave, onClose }: Props) {
         </label>
 
         <label className="mb-3 block text-sm text-white/70">
-          Image URL (optional)
+          Image or video URL (optional)
           <input
             className={`mt-1 w-full ${inputBase}`}
             value={imageUrl}
             onChange={(e) => setImageUrl(e.target.value)}
-            placeholder="https://..."
+            placeholder="https://... (image, YouTube link, or .mp4)"
           />
         </label>
 
@@ -58,6 +60,40 @@ export function ClueEditor({ clue, onSave, onClose }: Props) {
             onChange={(e) => setAnswer(e.target.value)}
           />
         </label>
+
+        <div className="mb-4 text-sm text-white/70">
+          Clue type
+          <div className={`mt-1 inline-flex w-full gap-1 rounded-xl bg-white/5 p-1 ${isDailyDouble ? 'opacity-40' : ''}`}>
+            {(
+              [
+                { value: 'standard', label: 'Standard (buzz-in)' },
+                { value: 'host_control', label: "Host's choice" },
+              ] as const
+            ).map((opt) => (
+              <button
+                key={opt.value}
+                type="button"
+                disabled={isDailyDouble}
+                onClick={() => setMode(opt.value)}
+                className={`flex-1 rounded-lg px-3 py-1.5 text-sm font-semibold transition duration-150 ${
+                  mode === opt.value
+                    ? 'bg-jeopardy-gold text-jeopardy-blue-dark shadow-md'
+                    : 'text-white/70 hover:bg-white/10 hover:text-white'
+                }`}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
+          {isDailyDouble && (
+            <p className="mt-1 text-xs text-white/40">Daily Doubles always use the wager flow.</p>
+          )}
+          {mode === 'host_control' && !isDailyDouble && (
+            <p className="mt-1 text-xs text-white/40">
+              No buzzers — you pick which player gets the money.
+            </p>
+          )}
+        </div>
 
         <label className="mb-5 flex items-center justify-between text-sm text-white/70">
           Daily Double

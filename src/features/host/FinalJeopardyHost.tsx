@@ -91,7 +91,7 @@ export function FinalJeopardyHost({ roomCode, game, players, board }: Props) {
 
         {game.phase === 'final_answering' && game.currentClue && (
           <div className="space-y-4">
-            <ClueDisplay clue={game.currentClue} />
+            <ClueDisplay clue={game.currentClue} video={{ role: 'host', roomCode }} />
             <p className="text-center font-jeopardy text-2xl text-jeopardy-gold">
               {Math.max(0, Math.ceil(((game.finalAnswerDeadline ?? now) - now) / 1000))}s
             </p>

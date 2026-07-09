@@ -4,7 +4,7 @@ import { ClueDisplay } from '../../components/ClueDisplay'
 import { useMyFinalAnswer, useMyFinalWager } from '../game/useGame'
 import { btnPrimary, card, inputBase } from '../../lib/uiClasses'
 import { submitFinalAnswer, submitFinalWager } from './playerActions'
-import type { Game, Player } from '../../types/game'
+import type { Game, Player, VideoSyncState } from '../../types/game'
 
 type Props = {
   roomCode: string
@@ -62,6 +62,7 @@ export function FinalJeopardyPlayer({ roomCode, game, players, uid }: Props) {
           roomCode={roomCode}
           uid={uid}
           clue={game.currentClue}
+          videoSync={game.videoSync ?? null}
           deadline={game.finalAnswerDeadline}
           submitted={!!myAnswer}
         />
@@ -122,12 +123,14 @@ function AnswerForm({
   roomCode,
   uid,
   clue,
+  videoSync,
   deadline,
   submitted,
 }: {
   roomCode: string
   uid: string
   clue: Game['currentClue']
+  videoSync: VideoSyncState | null
   deadline: number | null
   submitted: boolean
 }) {
@@ -149,7 +152,7 @@ function AnswerForm({
 
   return (
     <div className="flex flex-col items-center gap-4">
-      <ClueDisplay clue={clue} />
+      <ClueDisplay clue={clue} video={{ role: 'viewer', sync: videoSync }} />
       <p className={`font-jeopardy text-2xl ${timeUp ? 'text-red-400' : 'text-jeopardy-gold'}`}>{secondsLeft}s</p>
       <input
         value={answer}
