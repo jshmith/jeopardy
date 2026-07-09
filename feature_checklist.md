@@ -1,9 +1,0 @@
-- [x] Import and export your saved boards.
-- [x] Auto save for board editing.
-- [x] A more clear edit button for your boards.
-- [x] UX Enhancement: You should be able to create and look at your saved boards without first clicking on "Host game".
-- [x] On the player side, a buzzer should be available as soon as the clue is shown. However, if you click it before the host opens the buzzers, then it locks you out of clicking the buzzer again for 1 second. Perhaps there can be a color indicator when the host opens the buzzers.
-- [ ] Use Google auth instead of Anon auth.
-- [x] The host should be able to peek at the answer before it is revealed. Perhaps there could be some region of the screen where you if you hover over it, then it reveals the answer?
-- [ ] More question flexibility. Perhaps a clue can be marked as standard (default) or "host control" or something, where instead of players buzzing in, the host chooses a player to award the money to. This would enable different flavors of clues to be provided by the host.
-- [x] Videos in clues.

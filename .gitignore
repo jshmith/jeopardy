@@ -18,6 +18,11 @@ serviceAccountKey.json
 *-firebase-adminsdk-*.json
 exported-boards/
 
+# Local working files — not part of the app
+.firebase/
+feature_checklist.md
+scripts/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
