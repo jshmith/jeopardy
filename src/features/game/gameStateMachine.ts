@@ -61,6 +61,26 @@ export async function revealClue(
   })
 }
 
+// C3–C5: comfortably reachable (in some octave) for nearly all voices.
+const PITCH_GAME_MIN_MIDI = 48
+const PITCH_GAME_MAX_MIDI = 72
+
+/** Start the opening pitch minigame with a random target note. */
+export async function startPitchGame(roomCode: string) {
+  const targetMidi =
+    PITCH_GAME_MIN_MIDI + Math.floor(Math.random() * (PITCH_GAME_MAX_MIDI - PITCH_GAME_MIN_MIDI + 1))
+  await updateDoc(gameRef(roomCode), { phase: 'pitch_game', pitchGame: { targetMidi } })
+}
+
+/** Closest pitch wins opening control of the board. */
+export async function finishPitchGame(roomCode: string, winnerId: string) {
+  await updateDoc(gameRef(roomCode), { phase: 'board', controlPlayerId: winnerId, pitchGame: null })
+}
+
+export async function cancelPitchGame(roomCode: string) {
+  await updateDoc(gameRef(roomCode), { phase: 'board', pitchGame: null })
+}
+
 /** Host's video player publishes its play/pause/seek state; viewers follow it. */
 export async function setVideoSync(roomCode: string, state: VideoSyncState) {
   await updateDoc(gameRef(roomCode), { videoSync: state })

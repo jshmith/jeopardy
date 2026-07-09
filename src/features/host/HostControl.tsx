@@ -18,8 +18,10 @@ import {
   setDailyDoubleController,
   setRound,
   startFinalJeopardy,
+  startPitchGame,
 } from '../game/gameStateMachine'
 import { FinalJeopardyHost } from './FinalJeopardyHost'
+import { PitchGameHost } from '../pitch/PitchGameHost'
 import type { BoardClue, PrivateBoard, CurrentClue } from '../../types/game'
 
 function clueFromBoard(board: PrivateBoard, clue: CurrentClue): BoardClue {
@@ -91,12 +93,19 @@ export function HostControl() {
           />
         </div>
 
-        {!clue ? (
+        {game.phase === 'pitch_game' && game.pitchGame ? (
+          <PitchGameHost roomCode={roomCode} players={players} targetMidi={game.pitchGame.targetMidi} />
+        ) : !clue ? (
           <>
             <div className="mb-5 flex flex-wrap items-center gap-2">
               <span className="rounded-lg bg-white/10 px-3 py-1.5 text-sm capitalize text-white/80">
                 {game.round} Jeopardy
               </span>
+              {game.controlPlayerId === null && game.round === 'single' && (
+                <button onClick={() => roomCode && startPitchGame(roomCode)} className={btnQuiet}>
+                  🎵 Pitch-off for board control
+                </button>
+              )}
               {game.round === 'single' && (
                 <button onClick={() => roomCode && setRound(roomCode, 'double')} className={btnPrimary}>
                   Start Double Jeopardy

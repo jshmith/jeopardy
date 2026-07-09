@@ -10,6 +10,7 @@ import { Spinner } from '../../components/Spinner'
 import { BuzzerButton } from '../buzzer/BuzzerButton'
 import { DailyDoubleWagerPlayer } from './DailyDoubleWagerPlayer'
 import { FinalJeopardyPlayer } from './FinalJeopardyPlayer'
+import { PitchGamePlayer } from '../pitch/PitchGamePlayer'
 
 function CenteredLoader({ text }: { text: string }) {
   return (
@@ -67,7 +68,14 @@ export function PlayerView() {
           />
         </div>
 
-        {!clue ? (
+        {game.phase === 'pitch_game' && game.pitchGame ? (
+          <PitchGamePlayer
+            roomCode={roomCode}
+            uid={uid}
+            players={players}
+            targetMidi={game.pitchGame.targetMidi}
+          />
+        ) : !clue ? (
           <>
             <p className="mb-3 text-center text-sm capitalize tracking-wide text-white/50">{game.round} Jeopardy</p>
             <BoardGrid categories={boardMeta} />

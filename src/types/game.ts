@@ -9,6 +9,7 @@ export const MIN_WAGER = 5
 export type Round = 'single' | 'double' | 'final'
 
 export type GamePhase =
+  | 'pitch_game'
   | 'board'
   | 'clue_revealed'
   | 'daily_double_wager'
@@ -88,6 +89,19 @@ export type CurrentClue = {
   revealedAnswer: string | null
 }
 
+/** Opening minigame: match a random pitch, closest player gets board control. */
+export type PitchGameState = {
+  /** MIDI note number of the target pitch (C3–C5 range). */
+  targetMidi: number
+}
+
+export type PitchResult = {
+  detectedHz: number
+  /** Signed cents off the target, octave-folded to [-600, 600]. */
+  centsOff: number
+  submittedAt: Timestamp
+}
+
 /** Host-driven video playback state; viewers' players follow it. */
 export type VideoSyncState = {
   status: 'playing' | 'paused'
@@ -128,6 +142,8 @@ export type Game = {
   currentClue: CurrentClue | null
   /** Absent on games created before video sync existed — treat as null. */
   videoSync?: VideoSyncState | null
+  /** Set while the pitch minigame is running; absent on older games. */
+  pitchGame?: PitchGameState | null
   buzz: BuzzState
   controlPlayerId: string | null
   dailyDouble: DailyDoubleState | null

@@ -96,6 +96,17 @@ service cloud.firestore {
         allow delete: if isHost(roomCode);
       }
 
+      match /pitchResults/{playerId} {
+        // Standings are public within the room (same reasoning as players/).
+        allow read: if signedIn();
+        // One attempt per player, only while the pitch minigame is running.
+        allow create: if signedIn() && request.auth.uid == playerId &&
+          get(/databases/$(database)/documents/games/$(roomCode)).data.phase == 'pitch_game';
+        allow update: if false;
+        // Host may clear results (e.g. replaying the minigame).
+        allow delete: if isHost(roomCode);
+      }
+
       match /finalWagers/{playerId} {
         allow read: if isHost(roomCode) || (signedIn() && request.auth.uid == playerId);
         allow create: if signedIn() && request.auth.uid == playerId &&
