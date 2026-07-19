@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useNavigate, useParams, Link } from 'react-router-dom'
 import { useAuthUid } from '../../lib/useAuthUid'
-import { btnPrimary, inputBase } from '../../lib/uiClasses'
+import { parseMediaUrl } from '../../lib/mediaSource'
+import { boardCategoryInput, boardClueTile, btnPrimary, inputBase } from '../../lib/uiClasses'
 import { Spinner } from '../../components/Spinner'
 import { blankBoard, createBoard, getBoard, saveBoard } from './boardApi'
 import { ClueEditor } from './ClueEditor'
@@ -24,6 +25,7 @@ export function BoardEditor() {
     null,
   )
   const [status, setStatus] = useState<SaveStatus>('idle')
+  const [finalImageError, setFinalImageError] = useState(false)
   const skipNextAutosave = useRef(true)
   const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
@@ -86,13 +88,17 @@ export function BoardEditor() {
 
   if (!board || !boardId || boardId === 'new') {
     return (
-      <div className="flex min-h-screen items-center justify-center text-white/70">
+      <div className="flex min-h-screen items-center justify-center text-crt-cream/70">
         <Spinner /> <span className="ml-3">Loading board…</span>
       </div>
     )
   }
 
   const categories = round === 'double' ? board.doubleCategories : board.categories
+
+  const finalUrl = (board.finalJeopardy.imageUrl ?? '').trim()
+  const finalMediaIsVideo = finalUrl !== '' && parseMediaUrl(finalUrl).kind !== 'image'
+  const finalImagePreviewUrl = finalUrl !== '' && !finalMediaIsVideo ? finalUrl : ''
 
   function updateCategoryTitle(catIndex: number, title: string) {
     setBoard((prev) => {
@@ -119,17 +125,17 @@ export function BoardEditor() {
   }
 
   return (
-    <div className="min-h-screen bg-jeopardy-navy p-6 text-white">
+    <div className="min-h-screen crt-page p-6 text-crt-cream">
       <div className="mx-auto max-w-6xl">
         <div className="mb-5 flex items-center justify-between">
           <Link
             to="/host/boards"
-            className="text-sm text-white/60 transition hover:text-jeopardy-gold"
+            className="text-sm text-crt-cream/60 transition hover:text-crt-amber-light"
           >
             &larr; Back to boards
           </Link>
           <div className="flex items-center gap-3">
-            <span className="text-xs text-white/40">
+            <span className="text-xs text-crt-cream/40">
               {status === 'pending' && 'Unsaved changes'}
               {status === 'saving' && 'Saving…'}
               {status === 'saved' && 'All changes saved'}
@@ -147,20 +153,20 @@ export function BoardEditor() {
         </div>
 
         <input
-          className={`mb-5 w-full ${inputBase} text-xl font-jeopardy text-jeopardy-gold`}
+          className={`mb-5 w-full ${inputBase} font-display text-2xl font-medium text-crt-amber-light`}
           value={board.name}
           onChange={(e) => setBoard((prev) => (prev ? { ...prev, name: e.target.value } : prev))}
         />
 
-        <div className="mb-5 inline-flex gap-1 rounded-xl bg-white/5 p-1">
+        <div className="mb-5 inline-flex gap-1 rounded-xl bg-crt-cream/5 p-1">
           {(['single', 'double', 'final'] as const).map((r) => (
             <button
               key={r}
               onClick={() => setRound(r)}
-              className={`rounded-lg px-4 py-2 text-sm font-semibold capitalize transition duration-150 ${
+              className={`rounded-lg px-5 py-2.5 text-base font-semibold capitalize transition duration-150 ${
                 round === r
-                  ? 'bg-jeopardy-gold text-jeopardy-blue-dark shadow-md'
-                  : 'text-white/70 hover:bg-white/10 hover:text-white'
+                  ? 'bg-crt-amber text-crt-bg shadow-md'
+                  : 'text-crt-cream/70 hover:bg-crt-cream/10 hover:text-crt-cream'
               }`}
             >
               {r === 'final' ? 'Final Jeopardy' : `${r} Jeopardy`}
@@ -169,11 +175,11 @@ export function BoardEditor() {
         </div>
 
         {round !== 'final' ? (
-          <div className="grid grid-cols-6 gap-2">
+          <div className="grid grid-cols-6 gap-2 md:gap-3">
             {categories.map((cat, catIndex) => (
-              <div key={catIndex} className="flex flex-col gap-2">
+              <div key={catIndex} className="flex flex-col gap-2 md:gap-3">
                 <input
-                  className={`${inputBase} rounded-xl bg-jeopardy-blue/60 p-2 text-center text-xs font-bold uppercase tracking-wide`}
+                  className={boardCategoryInput}
                   value={cat.title}
                   onChange={(e) => updateCategoryTitle(catIndex, e.target.value)}
                   placeholder={`Category ${catIndex + 1}`}
@@ -182,24 +188,26 @@ export function BoardEditor() {
                   <button
                     key={clueIndex}
                     onClick={() => setEditing({ round, catIndex, clueIndex })}
-                    className="relative rounded-xl bg-gradient-to-b from-jeopardy-blue to-jeopardy-blue-dark p-3 text-center font-jeopardy text-jeopardy-gold shadow-md shadow-black/20 transition duration-150 hover:-translate-y-0.5 hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-jeopardy-gold/70"
+                    className={`${boardClueTile} relative bg-gradient-to-b from-crt-bg-light to-crt-bg text-crt-amber-light shadow-md shadow-black/20 hover:-translate-y-0.5 hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-crt-amber/70`}
                   >
                     ${clue.value}
                     {clue.isDailyDouble && (
-                      <span className="absolute right-1.5 top-1.5 rounded bg-jeopardy-gold/90 px-1 text-[9px] font-bold text-jeopardy-blue-dark">
+                      <span className="absolute right-1.5 top-1.5 rounded-md bg-crt-amber px-2 py-1 font-display text-xs font-bold text-crt-bg shadow">
                         DD
                       </span>
                     )}
                     {clue.mode === 'host_control' && !clue.isDailyDouble && (
                       <span
                         title="Host's choice — no buzzers"
-                        className="absolute right-1.5 top-1.5 rounded bg-purple-400/90 px-1 text-[9px] font-bold text-jeopardy-blue-dark"
+                        className="absolute right-1.5 top-1.5 rounded-md bg-purple-400 px-2 py-1 font-display text-xs font-bold text-crt-bg shadow"
                       >
                         HC
                       </span>
                     )}
                     {!clue.text && (
-                      <span className="absolute left-1.5 top-1.5 text-[9px] text-white/40">empty</span>
+                      <span className="absolute left-1.5 top-1.5 font-display text-[11px] text-crt-cream/40">
+                        empty
+                      </span>
                     )}
                   </button>
                 ))}
@@ -208,7 +216,7 @@ export function BoardEditor() {
           </div>
         ) : (
           <div className="max-w-lg space-y-4">
-            <label className="block text-sm text-white/70">
+            <label className="block text-sm text-crt-cream/70">
               Category
               <input
                 className={`mt-1 w-full ${inputBase}`}
@@ -216,7 +224,7 @@ export function BoardEditor() {
                 onChange={(e) => updateFinal({ category: e.target.value })}
               />
             </label>
-            <label className="block text-sm text-white/70">
+            <label className="block text-sm text-crt-cream/70">
               Clue text
               <textarea
                 className={`mt-1 w-full ${inputBase}`}
@@ -225,16 +233,62 @@ export function BoardEditor() {
                 onChange={(e) => updateFinal({ text: e.target.value })}
               />
             </label>
-            <label className="block text-sm text-white/70">
+            <label className="block text-sm text-crt-cream/70">
               Image or video URL (optional)
               <input
                 className={`mt-1 w-full ${inputBase}`}
                 value={board.finalJeopardy.imageUrl ?? ''}
-                onChange={(e) => updateFinal({ imageUrl: e.target.value.trim() ? e.target.value : null })}
+                onChange={(e) => {
+                  setFinalImageError(false)
+                  updateFinal({ imageUrl: e.target.value.trim() ? e.target.value : null })
+                }}
                 placeholder="https://... (image, YouTube link, or .mp4)"
               />
+              {finalImagePreviewUrl && (
+                <div className="mt-2 overflow-hidden rounded-lg border border-crt-cream/10 bg-black/20">
+                  {finalImageError ? (
+                    <p className="p-3 text-xs text-crt-cream/40">Couldn't load image from this URL</p>
+                  ) : (
+                    <img
+                      src={finalImagePreviewUrl}
+                      alt="Final Jeopardy preview"
+                      className="max-h-40 w-full object-contain"
+                      onError={() => setFinalImageError(true)}
+                      onLoad={() => setFinalImageError(false)}
+                    />
+                  )}
+                </div>
+              )}
             </label>
-            <label className="block text-sm text-white/70">
+            {board.finalJeopardy.imageUrl &&
+              parseMediaUrl(board.finalJeopardy.imageUrl).kind !== 'image' && (
+                <label className="flex items-center justify-between text-sm text-crt-cream/70">
+                  <span>
+                    Audio only for players
+                    <span className="block text-xs text-crt-cream/40">
+                      Players get a black screen with sound — you still see the video
+                    </span>
+                  </span>
+                  <button
+                    type="button"
+                    role="switch"
+                    aria-checked={board.finalJeopardy.hideVideoFromPlayers ?? false}
+                    onClick={() =>
+                      updateFinal({ hideVideoFromPlayers: !(board.finalJeopardy.hideVideoFromPlayers ?? false) })
+                    }
+                    className={`relative h-6 w-11 shrink-0 rounded-full transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-crt-amber/60 ${
+                      board.finalJeopardy.hideVideoFromPlayers ? 'bg-crt-amber' : 'bg-crt-cream/15'
+                    }`}
+                  >
+                    <span
+                      className={`absolute left-0 top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform duration-200 ${
+                        board.finalJeopardy.hideVideoFromPlayers ? 'translate-x-5' : 'translate-x-0.5'
+                      }`}
+                    />
+                  </button>
+                </label>
+              )}
+            <label className="block text-sm text-crt-cream/70">
               Correct answer
               <input
                 className={`mt-1 w-full ${inputBase}`}

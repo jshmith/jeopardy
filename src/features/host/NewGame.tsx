@@ -21,7 +21,7 @@ export function NewGame() {
   }, [uid, boardId, navigate])
 
   return (
-    <div className="flex min-h-screen items-center justify-center gap-3 bg-jeopardy-navy text-white/70">
+    <div className="flex min-h-screen items-center justify-center gap-3 crt-page text-crt-cream/70">
       <Spinner /> Creating game…
     </div>
   )

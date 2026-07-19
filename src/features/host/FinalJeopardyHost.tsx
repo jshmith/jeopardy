@@ -6,7 +6,7 @@ import { btnCorrect, btnIncorrect, btnPrimary, card } from '../../lib/uiClasses'
 import { judgeFinalPlayer, moveToFinalAnswering, moveToFinalWagering, setFinalRevealOrder } from '../game/gameStateMachine'
 import type { Game, Player, PrivateBoard } from '../../types/game'
 
-const ANSWER_DURATION_MS = 30_000
+const ANSWER_DURATION_MS = 60_000
 
 type Props = {
   roomCode: string
@@ -29,9 +29,9 @@ export function FinalJeopardyHost({ roomCode, game, players, board }: Props) {
   if (game.phase === 'game_over') {
     const ranked = [...players].sort((a, b) => b.score - a.score)
     return (
-      <div className="min-h-screen bg-jeopardy-navy p-6 text-white">
+      <div className="min-h-screen crt-page p-6 text-crt-cream">
         <div className="mx-auto max-w-2xl text-center">
-          <h1 className="mb-8 font-jeopardy text-4xl text-jeopardy-gold">Final Standings</h1>
+          <h1 className="mb-8 font-display text-4xl font-medium text-crt-amber-light">Final Standings</h1>
           <ol className="space-y-3">
             {ranked.map((p, i) => (
               <li
@@ -42,7 +42,7 @@ export function FinalJeopardyHost({ roomCode, game, players, board }: Props) {
                 <span className="font-semibold">
                   {i + 1}. {p.displayName}
                 </span>
-                <span className="font-jeopardy text-xl text-jeopardy-gold">${p.score}</span>
+                <span className="font-jeopardy text-xl text-crt-amber-light">${p.score}</span>
               </li>
             ))}
           </ol>
@@ -52,18 +52,18 @@ export function FinalJeopardyHost({ roomCode, game, players, board }: Props) {
   }
 
   return (
-    <div className="min-h-screen bg-jeopardy-navy p-4 text-white md:p-6">
+    <div className="min-h-screen crt-page p-4 text-crt-cream md:p-6">
       <div className="mx-auto max-w-4xl">
         <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
-          <div className="rounded-xl border border-white/10 bg-white/5 px-4 py-2 shadow-inner shadow-black/20">
-            <span className="text-xs uppercase tracking-wide text-white/50">Room code</span>
-            <div className="font-jeopardy text-3xl tracking-widest text-jeopardy-gold">{roomCode}</div>
+          <div className="rounded-xl border border-crt-cream/10 bg-crt-cream/5 px-4 py-2 shadow-inner shadow-black/20">
+            <span className="text-xs uppercase tracking-wide text-crt-cream/50">Room code</span>
+            <div className="font-jeopardy text-3xl tracking-widest text-crt-amber-light">{roomCode}</div>
           </div>
           <Scoreboard players={players} />
         </div>
 
-        <p className="mb-2 text-sm uppercase tracking-wide text-white/50">Final Jeopardy</p>
-        <h1 className="mb-6 font-jeopardy text-3xl text-jeopardy-gold">{game.finalJeopardyMeta.category}</h1>
+        <p className="mb-2 text-sm uppercase tracking-wide text-crt-cream/50">Final Jeopardy</p>
+        <h1 className="mb-6 font-display text-3xl font-medium text-crt-amber-light">{game.finalJeopardyMeta.category}</h1>
 
         {game.phase === 'final_category' && (
           <button onClick={() => moveToFinalWagering(roomCode)} className={btnPrimary}>
@@ -77,7 +77,7 @@ export function FinalJeopardyHost({ roomCode, game, players, board }: Props) {
               {players.map((p) => (
                 <li key={p.uid} className={`flex justify-between p-3 ${card}`}>
                   <span>{p.displayName}</span>
-                  <span className={wagers[p.uid] ? 'text-jeopardy-gold' : 'text-white/50'}>
+                  <span className={wagers[p.uid] ? 'text-crt-amber-light' : 'text-crt-cream/50'}>
                     {wagers[p.uid] ? 'Wager locked in' : 'Waiting…'}
                   </span>
                 </li>
@@ -92,14 +92,14 @@ export function FinalJeopardyHost({ roomCode, game, players, board }: Props) {
         {game.phase === 'final_answering' && game.currentClue && (
           <div className="space-y-4">
             <ClueDisplay clue={game.currentClue} video={{ role: 'host', roomCode }} />
-            <p className="text-center font-jeopardy text-2xl text-jeopardy-gold">
+            <p className="text-center font-jeopardy text-2xl text-crt-amber-light">
               {Math.max(0, Math.ceil(((game.finalAnswerDeadline ?? now) - now) / 1000))}s
             </p>
             <ul className="space-y-2">
               {players.map((p) => (
                 <li key={p.uid} className={`flex justify-between p-3 ${card}`}>
                   <span>{p.displayName}</span>
-                  <span className={answers[p.uid] ? 'text-jeopardy-gold' : 'text-white/50'}>
+                  <span className={answers[p.uid] ? 'text-crt-amber-light' : 'text-crt-cream/50'}>
                     {answers[p.uid] ? 'Answer locked in' : 'Waiting…'}
                   </span>
                 </li>
@@ -149,16 +149,16 @@ function FinalRevealStep({
   const wager = wagers[playerId]
   const answer = answers[playerId]
 
-  if (!player) return <p className="text-white/60">Loading…</p>
+  if (!player) return <p className="text-crt-cream/60">Loading…</p>
 
   return (
     <div className={`animate-clue-in p-8 text-center ${card}`}>
-      <p className="mb-4 font-jeopardy text-2xl text-jeopardy-gold">{player.displayName}</p>
-      <p className="mb-2 text-white/80">
-        Wager: <span className="text-jeopardy-gold">${wager?.value ?? '…'}</span>
+      <p className="mb-4 font-display text-2xl font-medium text-crt-amber-light">{player.displayName}</p>
+      <p className="mb-2 text-crt-cream/80">
+        Wager: <span className="text-crt-amber-light">${wager?.value ?? '…'}</span>
       </p>
-      <p className="mb-6 text-white/80">
-        Answer: {answer?.value || <em className="text-white/50">(no answer submitted)</em>}
+      <p className="mb-6 text-crt-cream/80">
+        Answer: {answer?.value || <em className="text-crt-cream/50">(no answer submitted)</em>}
       </p>
       <div className="flex justify-center gap-3">
         <button onClick={() => judgeFinalPlayer(roomCode, playerId, true, wager?.value ?? 0)} className={btnCorrect}>

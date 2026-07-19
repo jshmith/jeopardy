@@ -53,8 +53,8 @@ export function PitchGamePlayer({ roomCode, uid, players, targetMidi }: Props) {
 
   return (
     <div className={`animate-fade-in-up mx-auto max-w-md p-6 text-center ${card}`}>
-      <h2 className="mb-1 font-jeopardy text-2xl text-jeopardy-gold">Pitch-Off!</h2>
-      <p className="mb-5 text-sm text-white/60">
+      <h2 className="mb-1 font-display text-2xl font-medium text-crt-amber-light">Pitch-Off!</h2>
+      <p className="mb-5 text-sm text-crt-cream/60">
         Listen to the note, then hum it back. Closest player takes the board.
       </p>
 
@@ -74,7 +74,7 @@ export function PitchGamePlayer({ roomCode, uid, players, targetMidi }: Props) {
             </button>
           )}
 
-          {attempt === 'recording' && <p className="text-sm text-white/60">Hum now — hold the note!</p>}
+          {attempt === 'recording' && <p className="text-sm text-crt-cream/60">Hum now — hold the note!</p>}
           {attempt === 'no_pitch' && (
             <p className="text-sm text-amber-300">
               Couldn&apos;t hear a clear note — get closer to the mic and try again.
@@ -86,16 +86,16 @@ export function PitchGamePlayer({ roomCode, uid, players, targetMidi }: Props) {
             </p>
           )}
           {attempt === 'idle' && (
-            <p className="text-xs text-white/40">One good take is all you get — warm up first!</p>
+            <p className="text-xs text-crt-cream/40">One good take is all you get — warm up first!</p>
           )}
         </div>
       ) : (
         <div className="flex flex-col items-center gap-2">
-          <p className="text-lg text-white">
-            You hummed <span className="text-jeopardy-gold">{freqToNoteName(myResult.detectedHz)}</span> —{' '}
+          <p className="text-lg text-crt-cream">
+            You hummed <span className="text-crt-amber-light">{freqToNoteName(myResult.detectedHz)}</span> —{' '}
             <span className="font-semibold">{Math.abs(myResult.centsOff)}¢ off</span>
           </p>
-          <p className="flex items-center gap-2 text-sm text-white/50">
+          <p className="flex items-center gap-2 text-sm text-crt-cream/50">
             <Spinner className="h-3 w-3" /> Waiting for the host to call it…
           </p>
         </div>
@@ -107,7 +107,7 @@ export function PitchGamePlayer({ roomCode, uid, players, targetMidi }: Props) {
             <li
               key={p.uid}
               className={`flex items-center justify-between rounded-lg px-3 py-1.5 text-sm ${
-                i === 0 ? 'bg-jeopardy-gold/15 text-jeopardy-gold' : 'bg-white/5 text-white/70'
+                i === 0 ? 'bg-crt-amber/15 text-crt-amber-light' : 'bg-crt-cream/5 text-crt-cream/70'
               }`}
             >
               <span>

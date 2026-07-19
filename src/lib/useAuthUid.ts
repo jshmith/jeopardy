@@ -1,19 +1,7 @@
-import { useEffect, useState } from 'react'
-import { waitForAuth } from './firebase'
+import { useAuth } from './useAuth'
 
-/** Resolves to the current anonymous-auth uid, waiting for sign-in to complete. */
+/** Resolves to the current signed-in user's uid, or null while auth is still loading.
+ * Consumers render behind the RequireAuth gate, so a null here only means "not ready yet". */
 export function useAuthUid(): string | null {
-  const [uid, setUid] = useState<string | null>(null)
-
-  useEffect(() => {
-    let cancelled = false
-    waitForAuth().then((user) => {
-      if (!cancelled) setUid(user.uid)
-    })
-    return () => {
-      cancelled = true
-    }
-  }, [])
-
-  return uid
+  return useAuth().user?.uid ?? null
 }

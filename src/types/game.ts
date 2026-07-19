@@ -37,6 +37,8 @@ export type BoardClue = {
   isDailyDouble: boolean
   /** Absent on boards saved before clue modes existed — treat as 'standard'. */
   mode?: ClueMode
+  /** Video clues only: players get a black screen with audio (host still sees video). */
+  hideVideoFromPlayers?: boolean
 }
 
 export type BoardCategory = {
@@ -50,6 +52,8 @@ export type FinalJeopardyClue = {
   /** Media URL: image, YouTube link, or direct video file — detected at render time. */
   imageUrl: string | null
   answer: string
+  /** Video clues only: players get a black screen with audio (host still sees video). */
+  hideVideoFromPlayers?: boolean
 }
 
 export type Board = {
@@ -86,6 +90,8 @@ export type CurrentClue = {
   imageUrl: string | null
   isDailyDouble: boolean
   mode: ClueMode
+  /** Absent on games started before this option existed — treat as false. */
+  hideVideoFromPlayers?: boolean
   revealedAnswer: string | null
 }
 

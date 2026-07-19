@@ -22,7 +22,7 @@ export function FinalJeopardyPlayer({ roomCode, game, players, uid }: Props) {
     const ranked = [...players].sort((a, b) => b.score - a.score)
     return (
       <div className="mx-auto max-w-md text-center">
-        <h1 className="mb-6 font-jeopardy text-3xl text-jeopardy-gold">Final Standings</h1>
+        <h1 className="mb-6 font-display text-3xl font-medium text-crt-amber-light">Final Standings</h1>
         <ol className="space-y-3">
           {ranked.map((p, i) => (
             <li
@@ -33,7 +33,7 @@ export function FinalJeopardyPlayer({ roomCode, game, players, uid }: Props) {
               <span className="font-semibold">
                 {i + 1}. {p.displayName}
               </span>
-              <span className="font-jeopardy text-xl text-jeopardy-gold">${p.score}</span>
+              <span className="font-jeopardy text-xl text-crt-amber-light">${p.score}</span>
             </li>
           ))}
         </ol>
@@ -44,13 +44,13 @@ export function FinalJeopardyPlayer({ roomCode, game, players, uid }: Props) {
   return (
     <div className="mx-auto max-w-2xl">
       <Scoreboard players={players} highlightUid={uid} />
-      <p className="mb-2 mt-6 text-center text-sm uppercase tracking-wide text-white/50">Final Jeopardy</p>
-      <h1 className="mb-6 text-center font-jeopardy text-3xl text-jeopardy-gold">
+      <p className="mb-2 mt-6 text-center text-sm uppercase tracking-wide text-crt-cream/50">Final Jeopardy</p>
+      <h1 className="mb-6 text-center font-display text-3xl font-medium text-crt-amber-light">
         {game.finalJeopardyMeta.category}
       </h1>
 
       {game.phase === 'final_category' && (
-        <p className="animate-fade-in-up text-center text-white/70">Get ready to wager…</p>
+        <p className="animate-fade-in-up text-center text-crt-cream/70">Get ready to wager…</p>
       )}
 
       {game.phase === 'final_wagering' && me && (
@@ -69,7 +69,7 @@ export function FinalJeopardyPlayer({ roomCode, game, players, uid }: Props) {
       )}
 
       {game.phase === 'final_reveal' && (
-        <p className="animate-fade-in-up text-center text-white/70">The host is revealing wagers and answers…</p>
+        <p className="animate-fade-in-up text-center text-crt-cream/70">The host is revealing wagers and answers…</p>
       )}
     </div>
   )
@@ -90,11 +90,11 @@ function WagerForm({
   const [wager, setWager] = useState(0)
   const [sent, setSent] = useState(false)
 
-  if (submitted || sent) return <p className="animate-fade-in-up text-center text-white/70">Wager locked in — waiting…</p>
+  if (submitted || sent) return <p className="animate-fade-in-up text-center text-crt-cream/70">Wager locked in — waiting…</p>
 
   return (
     <div className={`animate-clue-in mx-auto flex max-w-sm flex-col items-center gap-4 p-8 text-center ${card}`}>
-      <p className="text-white/80">
+      <p className="text-crt-cream/80">
         Enter your wager (0–{maxWager})
       </p>
       <input
@@ -148,12 +148,12 @@ function AnswerForm({
 
   if (!clue) return null
 
-  if (submitted || sent) return <p className="animate-fade-in-up text-center text-white/70">Answer locked in — waiting…</p>
+  if (submitted || sent) return <p className="animate-fade-in-up text-center text-crt-cream/70">Answer locked in — waiting…</p>
 
   return (
     <div className="flex flex-col items-center gap-4">
       <ClueDisplay clue={clue} video={{ role: 'viewer', sync: videoSync }} />
-      <p className={`font-jeopardy text-2xl ${timeUp ? 'text-red-400' : 'text-jeopardy-gold'}`}>{secondsLeft}s</p>
+      <p className={`font-jeopardy text-2xl ${timeUp ? 'text-red-400' : 'text-crt-amber-light'}`}>{secondsLeft}s</p>
       <input
         value={answer}
         onChange={(e) => setAnswer(e.target.value)}

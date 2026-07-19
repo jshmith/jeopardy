@@ -21,8 +21,8 @@ export function PitchGameHost({ roomCode, players, targetMidi }: Props) {
 
   return (
     <div className={`animate-fade-in-up mx-auto max-w-xl p-8 text-center ${card}`}>
-      <h2 className="mb-1 font-jeopardy text-3xl text-jeopardy-gold">Pitch-Off!</h2>
-      <p className="mb-6 text-sm text-white/60">
+      <h2 className="mb-1 font-display text-3xl font-medium text-crt-amber-light">Pitch-Off!</h2>
+      <p className="mb-6 text-sm text-crt-cream/60">
         Closest hum to the mystery note takes control of the board.
       </p>
 
@@ -30,8 +30,8 @@ export function PitchGameHost({ roomCode, players, targetMidi }: Props) {
         <button onClick={() => void playTone(midiToFreq(targetMidi))} className={btnPrimary}>
           🔊 Play the pitch
         </button>
-        <p className="text-xs text-white/40">
-          Target: <span className="text-white/70">{noteName(targetMidi)}</span> — players hear it on
+        <p className="text-xs text-crt-cream/40">
+          Target: <span className="text-crt-cream/70">{noteName(targetMidi)}</span> — players hear it on
           their own devices too
         </p>
       </div>
@@ -42,7 +42,7 @@ export function PitchGameHost({ roomCode, players, targetMidi }: Props) {
             <li
               key={p.uid}
               className={`flex items-center justify-between rounded-lg px-4 py-2 ${
-                i === 0 ? 'bg-jeopardy-gold/15 text-jeopardy-gold' : 'bg-white/5 text-white/80'
+                i === 0 ? 'bg-crt-amber/15 text-crt-amber-light' : 'bg-crt-cream/5 text-crt-cream/80'
               }`}
             >
               <span className="font-semibold">
@@ -56,7 +56,7 @@ export function PitchGameHost({ roomCode, players, targetMidi }: Props) {
       )}
 
       {waitingOn.length > 0 && (
-        <p className="mb-6 text-sm text-white/50">
+        <p className="mb-6 text-sm text-crt-cream/50">
           Waiting on: {waitingOn.map((p) => p.displayName).join(', ')}
         </p>
       )}

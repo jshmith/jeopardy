@@ -13,15 +13,19 @@ type Props = {
   video?: VideoContext
 }
 
-function ClueMedia({ url, video }: { url: string; video?: VideoContext }) {
+function ClueMedia({ url, video, audioOnly }: { url: string; video?: VideoContext; audioOnly?: boolean }) {
   const source = parseMediaUrl(url)
   if (source.kind === 'image') {
     return (
-      <img src={source.url} alt="" className="relative max-h-80 max-w-full rounded-xl object-contain shadow-lg" />
+      <img
+        src={source.url}
+        alt=""
+        className="crt-media-safe max-h-80 max-w-full rounded-xl object-contain shadow-lg"
+      />
     )
   }
   if (video?.role === 'host') return <HostVideo url={url} roomCode={video.roomCode} />
-  if (video?.role === 'viewer') return <ViewerVideo url={url} sync={video.sync} />
+  if (video?.role === 'viewer') return <ViewerVideo url={url} sync={video.sync} audioOnly={audioOnly} />
   // No sync context supplied — plain playback fallback.
   if (source.kind === 'youtube') {
     return (
@@ -30,24 +34,28 @@ function ClueMedia({ url, video }: { url: string; video?: VideoContext }) {
         title="Clue video"
         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
         allowFullScreen
-        className="relative aspect-video w-full max-w-2xl rounded-xl shadow-lg"
+        className="crt-media-safe aspect-video w-full max-w-2xl rounded-xl shadow-lg"
       />
     )
   }
-  return <video src={source.url} controls className="relative max-h-80 max-w-full rounded-xl shadow-lg" />
+  return <video src={source.url} controls className="crt-media-safe max-h-80 max-w-full rounded-xl shadow-lg" />
 }
 
 export function ClueDisplay({ clue, video }: Props) {
   return (
-    <div className="animate-clue-in relative flex w-full flex-col items-center justify-center gap-6 overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-b from-jeopardy-blue to-jeopardy-blue-dark p-8 text-center shadow-2xl shadow-black/40 md:p-12">
+    <div className="animate-clue-in relative flex w-full flex-col items-center justify-center gap-6 overflow-hidden rounded-2xl border border-crt-cream/10 bg-gradient-to-b from-crt-bg-light to-crt-bg p-8 text-center shadow-2xl shadow-black/40 md:p-12">
       <div
         className="pointer-events-none absolute inset-0 opacity-40"
-        style={{ background: 'radial-gradient(circle at 50% 0%, rgba(255,255,255,0.12), transparent 60%)' }}
+        style={{ background: 'radial-gradient(circle at 50% 0%, rgba(244,234,216,0.12), transparent 60%)' }}
       />
-      <p className="relative font-jeopardy text-2xl leading-snug text-white md:text-4xl">{clue.text}</p>
-      {clue.imageUrl && <ClueMedia url={clue.imageUrl} video={video} />}
+      <p className="relative font-display text-2xl font-medium leading-snug text-crt-cream md:text-4xl">
+        {clue.text}
+      </p>
+      {clue.imageUrl && (
+        <ClueMedia url={clue.imageUrl} video={video} audioOnly={clue.hideVideoFromPlayers ?? false} />
+      )}
       {clue.revealedAnswer && (
-        <p className="animate-fade-in-up relative font-jeopardy text-xl text-jeopardy-gold md:text-2xl">
+        <p className="animate-fade-in-up relative font-display text-2xl font-medium text-crt-amber-light md:text-3xl">
           {clue.revealedAnswer}
         </p>
       )}

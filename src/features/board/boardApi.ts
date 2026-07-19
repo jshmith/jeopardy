@@ -29,6 +29,7 @@ function blankCategories(values: number[]): BoardCategory[] {
       answer: '',
       isDailyDouble: false,
       mode: 'standard' as const,
+      hideVideoFromPlayers: false,
     })),
   }))
 }
@@ -38,7 +39,7 @@ export function blankBoard(): Omit<Board, 'id' | 'ownerUid' | 'createdAt' | 'upd
     name: 'Untitled Board',
     categories: blankCategories(SINGLE_VALUES),
     doubleCategories: blankCategories(DOUBLE_VALUES),
-    finalJeopardy: { category: '', text: '', imageUrl: null, answer: '' },
+    finalJeopardy: { category: '', text: '', imageUrl: null, answer: '', hideVideoFromPlayers: false },
   }
 }
 

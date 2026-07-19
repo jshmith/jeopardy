@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { useAuthUid } from '../../lib/useAuthUid'
+import { useAuth } from '../../lib/useAuth'
 import { formatUpdated } from '../../lib/formatUpdated'
 import { btnPrimary, btnQuiet, btnSecondary, card, cardHover, inputBase } from '../../lib/uiClasses'
 import { Spinner } from '../../components/Spinner'
@@ -9,7 +9,8 @@ import { downloadBoardAsFile, parseImportedBoard } from './boardImportExport'
 import type { Board } from '../../types/game'
 
 export function BoardList() {
-  const uid = useAuthUid()
+  const { user, signOut } = useAuth()
+  const uid = user?.uid ?? null
   const navigate = useNavigate()
   const [boards, setBoards] = useState<Board[] | null>(null)
   const [importing, setImporting] = useState(false)
@@ -61,13 +62,13 @@ export function BoardList() {
   }
 
   return (
-    <div className="min-h-screen bg-jeopardy-navy p-6 text-white">
+    <div className="min-h-screen crt-page p-6 text-crt-cream">
       <div className="mx-auto max-w-3xl">
         <div className="mb-8 flex items-center justify-between">
-          <Link to="/" className="text-sm text-white/60 transition hover:text-jeopardy-gold">
+          <Link to="/" className="text-sm text-crt-cream/60 transition hover:text-crt-amber-light">
             &larr; Home
           </Link>
-          <h1 className="font-jeopardy text-2xl text-jeopardy-gold">My Boards</h1>
+          <h1 className="font-display text-2xl font-medium text-crt-amber-light">My Boards</h1>
           <div className="flex gap-2">
             <input
               ref={fileInputRef}
@@ -91,11 +92,11 @@ export function BoardList() {
         </div>
 
         {!boards ? (
-          <div className="flex items-center gap-3 text-white/60">
+          <div className="flex items-center gap-3 text-crt-cream/60">
             <Spinner /> Loading…
           </div>
         ) : boards.length === 0 ? (
-          <p className="rounded-xl border border-dashed border-white/15 p-8 text-center text-white/50">
+          <p className="rounded-xl border border-dashed border-crt-cream/15 p-8 text-center text-crt-cream/50">
             No boards yet — create one to get started.
           </p>
         ) : (
@@ -122,14 +123,14 @@ export function BoardList() {
                     <span className="flex items-center gap-2">
                       <Link
                         to={`/host/boards/${b.id}`}
-                        className="truncate font-semibold text-white transition hover:text-jeopardy-gold"
+                        className="truncate font-semibold text-crt-cream transition hover:text-crt-amber-light"
                       >
                         {b.name}
                       </Link>
                       <button
                         onClick={() => startRename(b)}
                         title="Rename board"
-                        className="rounded p-1 text-white/40 transition hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30"
+                        className="rounded p-1 text-crt-cream/40 transition hover:bg-crt-cream/10 hover:text-crt-cream focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-crt-cream/30"
                       >
                         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                           <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" />
@@ -138,13 +139,13 @@ export function BoardList() {
                     </span>
                   )}
                   {formatUpdated(b) && (
-                    <span className="mt-0.5 text-xs text-white/35">Updated {formatUpdated(b)}</span>
+                    <span className="mt-0.5 text-xs text-crt-cream/35">Updated {formatUpdated(b)}</span>
                   )}
                 </div>
                 <div className="flex shrink-0 items-center gap-2">
                   {confirmingDeleteId === b.id ? (
                     <>
-                      <span className="text-sm text-white/60">Delete this board?</span>
+                      <span className="text-sm text-crt-cream/60">Delete this board?</span>
                       <button
                         onClick={() => handleDelete(b.id)}
                         className="rounded-lg bg-red-600/90 px-3 py-1.5 text-sm font-semibold text-white transition hover:bg-red-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400/70"
@@ -174,8 +175,13 @@ export function BoardList() {
           </ul>
         )}
 
-        {uid && (
-          <p className="mt-8 text-center text-xs text-white/20 select-all">Signed in as: {uid}</p>
+        {user && (
+          <div className="mt-8 flex items-center justify-center gap-3 text-xs text-crt-cream/40">
+            <span>Signed in as {user.displayName ?? user.email ?? user.uid}</span>
+            <button onClick={() => signOut()} className={btnQuiet}>
+              Sign out
+            </button>
+          </div>
         )}
       </div>
     </div>

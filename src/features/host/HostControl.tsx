@@ -36,13 +36,13 @@ function PeekAnswer({ answer }: { answer: string }) {
     <button
       onClick={() => setPinned((p) => !p)}
       title="Hover or tap to peek at the answer"
-      className="group w-full max-w-xl rounded-xl border border-white/10 bg-white/5 px-5 py-3 text-center transition hover:border-white/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-jeopardy-gold/50"
+      className="group w-full max-w-xl rounded-xl border border-crt-cream/10 bg-crt-cream/5 px-5 py-3 text-center transition hover:border-crt-cream/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-crt-amber/50"
     >
-      <span className="mb-1 block text-[10px] font-semibold uppercase tracking-wider text-white/40">
+      <span className="mb-1 block text-[10px] font-semibold uppercase tracking-wider text-crt-cream/40">
         Answer — hover to peek
       </span>
       <span
-        className={`block text-lg text-jeopardy-gold transition duration-150 ${
+        className={`block font-display text-xl font-medium text-crt-amber-light transition duration-150 ${
           pinned ? '' : 'select-none blur-md group-hover:blur-none'
         }`}
       >
@@ -60,12 +60,12 @@ export function HostControl() {
 
   if (game === undefined || board === undefined)
     return (
-      <div className="flex min-h-screen items-center justify-center gap-3 bg-jeopardy-navy text-white/70">
+      <div className="flex min-h-screen items-center justify-center gap-3 crt-page text-crt-cream/70">
         <Spinner /> Loading…
       </div>
     )
   if (game === null)
-    return <div className="flex min-h-screen items-center justify-center bg-jeopardy-navy text-white/70">Game not found.</div>
+    return <div className="flex min-h-screen items-center justify-center crt-page text-crt-cream/70">Game not found.</div>
   if (!roomCode || !board) return null
 
   if (game.round === 'final') {
@@ -78,12 +78,12 @@ export function HostControl() {
   const answerText = clue ? clueFromBoard(board, clue).answer : ''
 
   return (
-    <div className="min-h-screen bg-jeopardy-navy p-4 text-white md:p-6">
+    <div className="min-h-screen crt-page p-4 text-crt-cream md:p-6">
       <div className="mx-auto max-w-6xl">
         <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
-          <div className="rounded-xl border border-white/10 bg-white/5 px-4 py-2 shadow-inner shadow-black/20">
-            <span className="text-xs uppercase tracking-wide text-white/50">Room code</span>
-            <div className="font-jeopardy text-3xl tracking-widest text-jeopardy-gold">{roomCode}</div>
+          <div className="rounded-xl border border-crt-cream/10 bg-crt-cream/5 px-4 py-2 shadow-inner shadow-black/20">
+            <span className="text-xs uppercase tracking-wide text-crt-cream/50">Room code</span>
+            <div className="font-jeopardy text-3xl tracking-widest text-crt-amber-light">{roomCode}</div>
           </div>
           <Scoreboard
             players={players}
@@ -98,7 +98,7 @@ export function HostControl() {
         ) : !clue ? (
           <>
             <div className="mb-5 flex flex-wrap items-center gap-2">
-              <span className="rounded-lg bg-white/10 px-3 py-1.5 text-sm capitalize text-white/80">
+              <span className="rounded-lg bg-crt-cream/10 px-3 py-1.5 text-sm capitalize text-crt-cream/80">
                 {game.round} Jeopardy
               </span>
               {game.controlPlayerId === null && game.round === 'single' && (
@@ -117,7 +117,7 @@ export function HostControl() {
                 </button>
               )}
               {allAnswered && (
-                <span className="animate-fade-in-up rounded-lg bg-white/5 px-3 py-1.5 text-sm text-white/50">
+                <span className="animate-fade-in-up rounded-lg bg-crt-cream/5 px-3 py-1.5 text-sm text-crt-cream/50">
                   Board complete — ready for next round
                 </span>
               )}
@@ -180,11 +180,11 @@ function HostClueView({
   if (phase === 'daily_double_wager') {
     const controller = players.find((p) => p.uid === dailyDoubleControllingPlayerId)
     return (
-      <div className="animate-clue-in rounded-2xl border border-white/10 bg-gradient-to-b from-jeopardy-blue to-jeopardy-blue-dark p-8 text-center shadow-2xl shadow-black/40">
-        <p className="mb-4 font-jeopardy text-3xl text-jeopardy-gold">DAILY DOUBLE</p>
+      <div className="animate-clue-in rounded-2xl border border-crt-cream/10 bg-gradient-to-b from-crt-bg-light to-crt-bg p-8 text-center shadow-2xl shadow-black/40">
+        <p className="mb-4 font-display text-3xl font-bold text-crt-amber-light">DAILY DOUBLE</p>
         {!dailyDoubleControllingPlayerId ? (
           <div className="mx-auto flex max-w-sm flex-col gap-3">
-            <p className="text-white/80">Who found the Daily Double?</p>
+            <p className="text-crt-cream/80">Who found the Daily Double?</p>
             <select
               className={inputBase}
               value={selectedController}
@@ -206,11 +206,11 @@ function HostClueView({
             </button>
           </div>
         ) : !dailyDoubleWagerSubmitted ? (
-          <p className="text-white/70">Waiting for {controller?.displayName ?? '…'} to enter their wager…</p>
+          <p className="text-crt-cream/70">Waiting for {controller?.displayName ?? '…'} to enter their wager…</p>
         ) : (
           <div className="flex flex-col items-center gap-4">
-            <p className="text-white/80">
-              {controller?.displayName} wagers <span className="text-jeopardy-gold">${dailyDoubleWager}</span>
+            <p className="text-crt-cream/80">
+              {controller?.displayName} wagers <span className="text-crt-amber-light">${dailyDoubleWager}</span>
             </p>
             <button onClick={() => revealDailyDoubleClue(roomCode)} className={btnPrimary}>
               Reveal Clue
@@ -236,8 +236,8 @@ function HostClueView({
         </button>
       ) : clue.isDailyDouble ? (
         <div className="flex flex-col items-center gap-3">
-          <p className="text-white/80">
-            Judging <span className="text-jeopardy-gold">{controllerName}</span> for ${dailyDoubleWager}
+          <p className="text-crt-cream/80">
+            Judging <span className="text-crt-amber-light">{controllerName}</span> for ${dailyDoubleWager}
           </p>
           <div className="flex gap-3">
             <button
@@ -262,8 +262,8 @@ function HostClueView({
         </div>
       ) : phase === 'clue_revealed' && clue.mode === 'host_control' ? (
         <div className="flex flex-col items-center gap-3">
-          <p className="text-white/80">
-            Host&apos;s choice — award <span className="text-jeopardy-gold">${clue.value}</span> to:
+          <p className="text-crt-cream/80">
+            Host&apos;s choice — award <span className="text-crt-amber-light">${clue.value}</span> to:
           </p>
           <div className="flex flex-wrap justify-center gap-2">
             {players.map((p) => (
@@ -276,7 +276,7 @@ function HostClueView({
               </button>
             ))}
           </div>
-          {players.length === 0 && <p className="text-sm text-white/50">No players have joined yet.</p>}
+          {players.length === 0 && <p className="text-sm text-crt-cream/50">No players have joined yet.</p>}
           <button onClick={() => forceRevealAnswer(roomCode, answerText)} className={btnQuiet}>
             No one — reveal answer &amp; move on
           </button>
@@ -289,8 +289,8 @@ function HostClueView({
         <div className="flex flex-col items-center gap-3">
           {buzzWinnerId ? (
             <>
-              <p className="text-white/80">
-                <span className="text-jeopardy-gold">{winnerName}</span> buzzed in for ${clue.value}
+              <p className="text-crt-cream/80">
+                <span className="text-crt-amber-light">{winnerName}</span> buzzed in for ${clue.value}
               </p>
               <div className="flex gap-3">
                 <button
@@ -308,7 +308,7 @@ function HostClueView({
               </div>
             </>
           ) : (
-            <p className="animate-fade-in-up text-white/60">Buzzers open — waiting for a buzz…</p>
+            <p className="animate-fade-in-up text-crt-cream/60">Buzzers open — waiting for a buzz…</p>
           )}
           <button onClick={() => forceRevealAnswer(roomCode, answerText)} className={btnQuiet}>
             Reveal answer &amp; move on

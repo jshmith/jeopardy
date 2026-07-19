@@ -14,7 +14,7 @@ import { PitchGamePlayer } from '../pitch/PitchGamePlayer'
 
 function CenteredLoader({ text }: { text: string }) {
   return (
-    <div className="flex min-h-screen items-center justify-center gap-3 bg-jeopardy-navy text-white/70">
+    <div className="flex min-h-screen items-center justify-center gap-3 crt-page text-crt-cream/70">
       <Spinner /> {text}
     </div>
   )
@@ -32,7 +32,7 @@ export function PlayerView() {
 
   if (!roomCode || game === undefined || !uid) return <CenteredLoader text="Loading…" />
   if (game === null)
-    return <div className="flex min-h-screen items-center justify-center bg-jeopardy-navy text-white/70">Game not found.</div>
+    return <div className="flex min-h-screen items-center justify-center crt-page text-crt-cream/70">Game not found.</div>
 
   const me = players.find((p) => p.uid === uid)
   if (players.length > 0 && !me) {
@@ -42,7 +42,7 @@ export function PlayerView() {
 
   if (game.round === 'final') {
     return (
-      <div className="min-h-screen bg-jeopardy-navy p-4 text-white md:p-6">
+      <div className="min-h-screen crt-page p-4 text-crt-cream md:p-6">
         <FinalJeopardyPlayer roomCode={roomCode} game={game} players={players} uid={uid} />
       </div>
     )
@@ -56,8 +56,8 @@ export function PlayerView() {
     !game.dailyDouble.wagerSubmitted
 
   return (
-    <div className="min-h-screen bg-jeopardy-navy p-4 text-white md:p-6">
-      <div className="mx-auto max-w-3xl">
+    <div className="min-h-screen crt-page p-4 text-crt-cream md:p-6">
+      <div className="mx-auto max-w-6xl">
         <div className="mb-5">
           <Scoreboard
             players={players}
@@ -77,19 +77,19 @@ export function PlayerView() {
           />
         ) : !clue ? (
           <>
-            <p className="mb-3 text-center text-sm capitalize tracking-wide text-white/50">{game.round} Jeopardy</p>
+            <p className="mb-3 text-center text-sm capitalize tracking-wide text-crt-cream/50">{game.round} Jeopardy</p>
             <BoardGrid categories={boardMeta} />
           </>
         ) : isDailyDoubleController ? (
           <DailyDoubleWagerPlayer roomCode={roomCode} round={game.round} myScore={me.score} />
         ) : game.phase === 'daily_double_wager' ? (
-          <p className="animate-fade-in-up text-center text-white/70">Daily Double! Waiting on the wager…</p>
+          <p className="animate-fade-in-up text-center text-crt-cream/70">Daily Double! Waiting on the wager…</p>
         ) : (
           <div className="flex flex-col items-center gap-6">
             <ClueDisplay clue={clue} video={{ role: 'viewer', sync: game.videoSync ?? null }} />
             {(game.phase === 'clue_revealed' || game.phase === 'buzzer_open') &&
               (clue.mode === 'host_control' ? (
-                <p className="animate-fade-in-up text-center text-white/60">
+                <p className="animate-fade-in-up text-center text-crt-cream/60">
                   No buzzers on this one — the host picks who gets the money.
                 </p>
               ) : (

@@ -20,13 +20,13 @@ export function DailyDoubleWagerPlayer({ roomCode, round, myScore }: Props) {
   }
 
   if (submitted) {
-    return <p className="animate-fade-in-up text-center text-white/70">Wager submitted — waiting for host…</p>
+    return <p className="animate-fade-in-up text-center text-crt-cream/70">Wager submitted — waiting for host…</p>
   }
 
   return (
     <div className={`animate-clue-in mx-auto flex max-w-sm flex-col items-center gap-4 p-8 text-center ${card}`}>
-      <p className="font-jeopardy text-2xl text-jeopardy-gold">DAILY DOUBLE!</p>
-      <p className="text-white/80">You found it — enter your wager.</p>
+      <p className="font-display text-2xl font-bold text-crt-amber-light">DAILY DOUBLE!</p>
+      <p className="text-crt-cream/80">You found it — enter your wager.</p>
       <input
         type="number"
         min={MIN_WAGER}
@@ -35,7 +35,7 @@ export function DailyDoubleWagerPlayer({ roomCode, round, myScore }: Props) {
         onChange={(e) => setWager(Number(e.target.value))}
         className={`w-32 ${inputBase} text-center font-jeopardy text-xl`}
       />
-      <p className="text-xs text-white/50">
+      <p className="text-xs text-crt-cream/50">
         Between ${MIN_WAGER} and ${maxWager}
       </p>
       <button onClick={handleSubmit} disabled={wager < MIN_WAGER || wager > maxWager} className={btnPrimary}>

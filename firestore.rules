@@ -4,7 +4,16 @@ service cloud.firestore {
   match /databases/{database}/documents {
 
     function signedIn() {
+      // Everyone — including players who never create an account — gets a silent
+      // anonymous session, so this only rules out fully unauthenticated requests.
       return request.auth != null;
+    }
+
+    function isGoogleUser() {
+      // Board ownership and hosting require a real, cross-device identity, not the
+      // per-browser anonymous session everyone else uses to join/play.
+      return signedIn() &&
+        request.auth.token.firebase.sign_in_provider == 'google.com';
     }
 
     function isHost(roomCode) {
@@ -19,9 +28,9 @@ service cloud.firestore {
 
     // ---- Board template library ----
     match /boards/{boardId} {
-      allow read: if signedIn() && resource.data.ownerUid == request.auth.uid;
-      allow create: if signedIn() && request.resource.data.ownerUid == request.auth.uid;
-      allow update, delete: if signedIn() && resource.data.ownerUid == request.auth.uid;
+      allow read: if isGoogleUser() && resource.data.ownerUid == request.auth.uid;
+      allow create: if isGoogleUser() && request.resource.data.ownerUid == request.auth.uid;
+      allow update, delete: if isGoogleUser() && resource.data.ownerUid == request.auth.uid;
     }
 
     // ---- Live game ----
@@ -34,7 +43,7 @@ service cloud.firestore {
       // room code is free (doc doesn't exist yet) when generating a new one.
       allow read: if signedIn();
 
-      allow create: if signedIn() && request.resource.data.hostUid == request.auth.uid;
+      allow create: if isGoogleUser() && request.resource.data.hostUid == request.auth.uid;
 
       // Host drives every phase transition, clue reveal, scoring, and buzzer reopen.
       allow update: if isHost(roomCode) ||

@@ -40,7 +40,7 @@ function HostFileVideo({ url, roomCode }: { url: string; roomCode: string }) {
       onPlay={() => publish('playing')}
       onPause={() => publish('paused')}
       onSeeked={() => publish(ref.current?.paused ? 'paused' : 'playing')}
-      className="relative max-h-80 max-w-full rounded-xl shadow-lg"
+      className="crt-media-safe max-h-80 max-w-full rounded-xl shadow-lg"
     />
   )
 }
@@ -83,7 +83,7 @@ function HostYouTube({ videoId, roomCode }: { videoId: string; roomCode: string 
   }, [videoId, roomCode])
 
   return (
-    <div className="relative aspect-video w-full max-w-2xl overflow-hidden rounded-xl shadow-lg">
+    <div className="crt-media-safe aspect-video w-full max-w-2xl overflow-hidden rounded-xl shadow-lg">
       <div ref={containerRef} className="h-full w-full" />
     </div>
   )
@@ -91,26 +91,40 @@ function HostYouTube({ videoId, roomCode }: { videoId: string; roomCode: string 
 
 // ---- Viewer side: no controls, follows the host's published state ----
 
-export function ViewerVideo({ url, sync }: { url: string; sync: VideoSyncState | null }) {
+export function ViewerVideo({
+  url,
+  sync,
+  audioOnly = false,
+}: {
+  url: string
+  sync: VideoSyncState | null
+  audioOnly?: boolean
+}) {
   const youTubeId = getYouTubeVideoId(url)
   const [audioEnabled, setAudioEnabled] = useState(false)
 
   return (
-    <div className="relative w-full max-w-2xl">
+    <div className="crt-media-safe w-full max-w-2xl">
       {youTubeId ? (
         <ViewerYouTube videoId={youTubeId} sync={sync} muted={!audioEnabled} />
       ) : (
         <ViewerFileVideo url={url} sync={sync} muted={!audioEnabled} />
       )}
+      {audioOnly && (
+        <div className="absolute inset-0 z-[5] flex flex-col items-center justify-center gap-2 rounded-xl bg-black">
+          <span className="text-4xl">🎵</span>
+          <span className="text-sm text-crt-cream/50">Audio only — listen closely!</span>
+        </div>
+      )}
       {!audioEnabled && (
         <button
           onClick={() => setAudioEnabled(true)}
-          className="absolute inset-x-0 bottom-3 z-10 mx-auto w-fit animate-pulse rounded-full bg-black/75 px-4 py-2 text-sm font-semibold text-white shadow-lg backdrop-blur transition hover:bg-black/90"
+          className="absolute inset-x-0 bottom-3 z-10 mx-auto w-fit animate-pulse rounded-full bg-black/75 px-4 py-2 text-sm font-semibold text-crt-cream shadow-lg backdrop-blur transition hover:bg-black/90"
         >
           🔇 Tap to enable sound
         </button>
       )}
-      <p className="mt-2 text-center text-xs text-white/40">The host controls playback</p>
+      <p className="mt-2 text-center text-xs text-crt-cream/40">The host controls playback</p>
     </div>
   )
 }

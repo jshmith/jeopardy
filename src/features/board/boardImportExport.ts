@@ -34,7 +34,8 @@ function isBoardClue(v: unknown): v is BoardClue {
     (typeof c.imageUrl === 'string' || c.imageUrl === null) &&
     typeof c.answer === 'string' &&
     typeof c.isDailyDouble === 'boolean' &&
-    (c.mode === undefined || c.mode === 'standard' || c.mode === 'host_control')
+    (c.mode === undefined || c.mode === 'standard' || c.mode === 'host_control') &&
+    (c.hideVideoFromPlayers === undefined || typeof c.hideVideoFromPlayers === 'boolean')
   )
 }
 
@@ -56,7 +57,8 @@ function isFinalJeopardyClue(v: unknown): v is FinalJeopardyClue {
     typeof c.category === 'string' &&
     typeof c.text === 'string' &&
     (typeof c.imageUrl === 'string' || c.imageUrl === null) &&
-    typeof c.answer === 'string'
+    typeof c.answer === 'string' &&
+    (c.hideVideoFromPlayers === undefined || typeof c.hideVideoFromPlayers === 'boolean')
   )
 }
 
