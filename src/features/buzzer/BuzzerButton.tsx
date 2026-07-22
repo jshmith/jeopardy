@@ -1,49 +1,47 @@
 import { useEffect, useState } from 'react'
-import { tryBuzz } from './useBuzz'
+import { recordBuzzAttempt } from './useBuzz'
 import type { BuzzState } from '../../types/game'
-
-const EARLY_BUZZ_LOCKOUT_MS = 1000
 
 type Props = {
   roomCode: string
   playerId: string
   buzz: BuzzState
+  /** This device's clock offset from the server's, so "armed" fires at the same real
+   * moment for every player regardless of whose listener heard about it first. */
+  clockOffsetMs: number
 }
 
-export function BuzzerButton({ roomCode, playerId, buzz }: Props) {
+export function BuzzerButton({ roomCode, playerId, buzz, clockOffsetMs }: Props) {
   const [pending, setPending] = useState(false)
-  const [lockedUntil, setLockedUntil] = useState(0)
   const [, setTick] = useState(0)
 
-  const earlyLocked = Date.now() < lockedUntil
+  const armed = buzz.isOpen && Date.now() + clockOffsetMs >= buzz.opensAtMs
 
-  // Re-render once the early-buzz penalty expires so the button un-greys itself.
+  // Re-render the instant this player's local clock reaches opensAtMs, so the
+  // button goes live at the same real moment for everyone, not whenever each
+  // client happens to notice.
   useEffect(() => {
-    if (!earlyLocked) return
-    const t = setTimeout(() => setTick((n) => n + 1), lockedUntil - Date.now())
+    if (armed || !buzz.isOpen) return
+    const delay = buzz.opensAtMs - (Date.now() + clockOffsetMs)
+    const t = setTimeout(() => setTick((n) => n + 1), Math.max(0, delay))
     return () => clearTimeout(t)
-  }, [lockedUntil, earlyLocked])
+  }, [armed, buzz.isOpen, buzz.opensAtMs, clockOffsetMs])
 
+  const hasAttempted = buzz.attempts?.[playerId] !== undefined
   const lockedOut = buzz.lockedOutPlayerIds.includes(playerId)
   const isWinner = buzz.winnerId === playerId
   const someoneElseWon = buzz.winnerId !== null && buzz.winnerId !== playerId
-  const open = buzz.isOpen && buzz.winnerId === null
-  const canBuzz = open && !lockedOut && !pending && !earlyLocked
+  const canBuzz = armed && buzz.winnerId === null && !hasAttempted && !lockedOut && !pending
 
   async function handleClick() {
-    if (isWinner || someoneElseWon || lockedOut || pending || earlyLocked) return
-    if (!buzz.isOpen) {
-      // Buzzed before the host opened the buzzers: 1s local penalty.
-      setLockedUntil(Date.now() + EARLY_BUZZ_LOCKOUT_MS)
-      return
-    }
+    if (!canBuzz) return
     setPending(true)
-    await tryBuzz(roomCode, playerId, buzz.token)
+    await recordBuzzAttempt(roomCode, playerId, buzz.token, Date.now() + clockOffsetMs)
     setPending(false)
   }
 
   let label = 'BUZZ'
-  let hint = 'Buzz when it turns green!'
+  let hint = 'Wait for it…'
   if (isWinner) {
     label = "YOU'RE IN!"
     hint = ''
@@ -53,28 +51,30 @@ export function BuzzerButton({ roomCode, playerId, buzz }: Props) {
   } else if (lockedOut) {
     label = 'Already tried'
     hint = ''
-  } else if (earlyLocked) {
-    label = 'Too soon!'
-    hint = 'Locked for buzzing early…'
-  } else if (open) {
+  } else if (hasAttempted) {
+    label = 'Buzzed!'
+    hint = 'Waiting to see who was first…'
+  } else if (canBuzz) {
     label = 'BUZZ!'
     hint = 'Buzzers are open!'
+  } else if (buzz.isOpen) {
+    hint = 'Get ready…'
   }
 
   const colorClasses = isWinner
     ? 'animate-pulse-ring bg-gradient-to-b from-crt-amber-light to-crt-amber text-crt-bg shadow-crt-amber/30'
     : canBuzz
-      ? 'bg-gradient-to-b from-green-400 to-green-600 text-white shadow-black/40 hover:brightness-110 hover:shadow-2xl active:scale-95 active:shadow-inner focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-green-300/50 animate-pulse-ring'
-      : someoneElseWon || lockedOut || earlyLocked
+      ? 'cursor-pointer bg-gradient-to-b from-green-400 to-green-600 text-white shadow-black/40 hover:brightness-110 hover:shadow-2xl active:scale-95 active:shadow-inner focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-green-300/50 animate-pulse-ring'
+      : someoneElseWon || lockedOut || hasAttempted
         ? 'bg-crt-cream/5 text-crt-cream/30 shadow-inner shadow-black/30'
-        : 'bg-gradient-to-b from-red-800 to-red-950 text-crt-cream/60 shadow-black/40 active:scale-95 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-red-400/30'
+        : 'bg-gradient-to-b from-red-800 to-red-950 text-crt-cream/60 shadow-black/40'
 
   return (
     <div className="flex flex-col items-center gap-3">
       <button
         onClick={handleClick}
-        disabled={isWinner || someoneElseWon || lockedOut || pending || earlyLocked}
-        className={`h-40 w-40 rounded-full font-display text-xl font-bold shadow-xl transition-all duration-150 sm:h-56 sm:w-56 sm:text-2xl ${colorClasses}`}
+        disabled={!canBuzz}
+        className={`h-40 w-40 rounded-full font-display text-xl font-bold shadow-xl transition-all duration-150 sm:h-56 sm:w-56 sm:text-2xl disabled:cursor-not-allowed ${colorClasses}`}
       >
         {label}
       </button>

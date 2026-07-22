@@ -8,6 +8,12 @@ export async function submitDailyDoubleWager(roomCode: string, wager: number) {
   })
 }
 
+export async function submitHostChoiceAnswer(roomCode: string, uid: string, answer: string) {
+  await updateDoc(doc(db, 'games', roomCode), {
+    [`currentClue.textAnswers.${uid}`]: answer,
+  })
+}
+
 export async function submitFinalWager(roomCode: string, uid: string, wager: number) {
   await setDoc(doc(db, 'games', roomCode, 'finalWagers', uid), {
     value: wager,

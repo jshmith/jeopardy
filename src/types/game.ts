@@ -37,6 +37,8 @@ export type BoardClue = {
   isDailyDouble: boolean
   /** Absent on boards saved before clue modes existed — treat as 'standard'. */
   mode?: ClueMode
+  /** Host's choice clues only: players get a text box to type a guess instead of just watching. */
+  allowTextInput?: boolean
   /** Video clues only: players get a black screen with audio (host still sees video). */
   hideVideoFromPlayers?: boolean
 }
@@ -90,6 +92,10 @@ export type CurrentClue = {
   imageUrl: string | null
   isDailyDouble: boolean
   mode: ClueMode
+  /** Host's choice clues only: players get a text box to type a guess instead of just watching. */
+  allowTextInput?: boolean
+  /** Players' typed guesses for a host's-choice clue with text input enabled, keyed by uid. */
+  textAnswers?: Record<string, string>
   /** Absent on games started before this option existed — treat as false. */
   hideVideoFromPlayers?: boolean
   revealedAnswer: string | null
@@ -113,16 +119,25 @@ export type VideoSyncState = {
   status: 'playing' | 'paused'
   /** Video position (seconds) when this state was written. */
   time: number
-  /** Host wall-clock ms when written; viewers extrapolate position while playing. */
-  setAtMs: number
+  /** Server-clock timestamp this state was written — not any device's local clock —
+   * so viewers can extrapolate position while playing without trusting either their
+   * own or the host's device clock to be accurate. */
+  setAt: Timestamp
 }
 
 export type BuzzState = {
   token: string
+  /** Server-time estimate (ms) at which buzzing becomes fair game. Every client arms
+   * its own buzzer against this instant instead of reacting to whenever `isOpen`
+   * happens to propagate to it, so slower connections don't see the buzzer late. */
+  opensAtMs: number
   isOpen: boolean
   winnerId: string | null
   winnerAt: Timestamp | null
   lockedOutPlayerIds: string[]
+  /** Offset-corrected press-time estimates (ms), collected from every player who buzzes
+   * during the short judging window after opening — the earliest one wins. */
+  attempts: Record<string, number>
 }
 
 export type DailyDoubleState = {

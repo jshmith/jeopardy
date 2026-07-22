@@ -11,7 +11,7 @@ export function Home() {
       {isGoogleUser && (
         <div className="relative flex items-center gap-3 text-xs text-crt-cream/50">
           <span>Signed in as {user?.displayName ?? user?.email}</span>
-          <button onClick={() => signOut()} className="rounded-lg px-3 py-1.5 text-sm text-crt-cream/60 transition duration-150 hover:bg-crt-cream/10 hover:text-crt-cream/80">
+          <button onClick={() => signOut()} className="cursor-pointer rounded-lg px-3 py-1.5 text-sm text-crt-cream/60 transition duration-150 hover:bg-crt-cream/10 hover:text-crt-cream/80">
             Sign out
           </button>
         </div>

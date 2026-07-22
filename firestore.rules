@@ -47,16 +47,22 @@ service cloud.firestore {
 
       // Host drives every phase transition, clue reveal, scoring, and buzzer reopen.
       allow update: if isHost(roomCode) ||
-        // Any joined player may attempt to buzz in: the write may touch ONLY the
-        // `buzz` map, and may only claim the win for themselves.
+        // Any joined, not-locked-out player may record their own buzz attempt during an
+        // open window: the write may touch ONLY their own entry in buzz.attempts, and
+        // the claimed press time must be within a few seconds of the server's own clock
+        // (request.time, which the client can't spoof) — generous enough to absorb
+        // realistic clock-offset error, tight enough that a tampered client can't just
+        // claim to have buzzed arbitrarily early.
         (isPlayer(roomCode) &&
-          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['buzz']) &&
-          request.resource.data.buzz.token == resource.data.buzz.token &&
           resource.data.buzz.isOpen == true &&
           resource.data.buzz.winnerId == null &&
-          request.resource.data.buzz.winnerId == request.auth.uid &&
-          request.resource.data.buzz.isOpen == false &&
-          request.resource.data.buzz.lockedOutPlayerIds == resource.data.buzz.lockedOutPlayerIds) ||
+          !(request.auth.uid in resource.data.buzz.lockedOutPlayerIds) &&
+          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['buzz']) &&
+          request.resource.data.buzz.token == resource.data.buzz.token &&
+          request.resource.data.buzz.diff(resource.data.buzz).affectedKeys().hasOnly(['attempts']) &&
+          request.resource.data.buzz.attempts.diff(resource.data.buzz.attempts).affectedKeys().hasOnly([request.auth.uid]) &&
+          request.resource.data.buzz.attempts[request.auth.uid] >= request.time.toMillis() - 3000 &&
+          request.resource.data.buzz.attempts[request.auth.uid] <= request.time.toMillis() + 3000) ||
         // The controlling player may submit their Daily Double wager exactly once.
         (isPlayer(roomCode) &&
           request.resource.data.diff(resource.data).affectedKeys().hasOnly(['dailyDouble']) &&
@@ -71,6 +77,15 @@ service cloud.firestore {
             ? get(/databases/$(database)/documents/games/$(roomCode)/players/$(request.auth.uid)).data.score
             : (resource.data.round == 'double' ? 2000 : 1000)
           )) ||
+        // Any joined player may submit/edit their own guess on a host's-choice clue that
+        // has text input enabled, touching only their own entry in currentClue.textAnswers.
+        (isPlayer(roomCode) &&
+          resource.data.currentClue.mode == 'host_control' &&
+          resource.data.currentClue.allowTextInput == true &&
+          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['currentClue']) &&
+          request.resource.data.currentClue.diff(resource.data.currentClue).affectedKeys().hasOnly(['textAnswers']) &&
+          request.resource.data.currentClue.textAnswers.diff(resource.data.currentClue.textAnswers)
+            .affectedKeys().hasOnly([request.auth.uid])) ||
         // A newly-joining player increments the player counter by exactly one, as part
         // of their join transaction (they aren't in `players/` yet, so isPlayer() can't
         // be used to scope this — the players/{playerId} create rule's own playerCount

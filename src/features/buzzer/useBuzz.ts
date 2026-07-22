@@ -1,15 +1,21 @@
-import { doc, runTransaction, serverTimestamp } from 'firebase/firestore'
+import { doc, runTransaction } from 'firebase/firestore'
 import { db } from '../../lib/firebase'
 
-export type BuzzResult = 'won' | 'lost'
+export type RecordAttemptResult = 'recorded' | 'rejected'
 
 /**
- * Attempts to claim the buzz-in for `playerId`. Race-safe: Firestore serializes
- * concurrent transactions against the game doc, so only the first commit to see
- * `winnerId === null` succeeds — everyone else re-reads the now-changed doc and
- * throws before writing anything.
+ * Records this player's (offset-corrected) press time as their buzz attempt for the
+ * current window. The winner isn't decided here — the host's client picks whichever
+ * recorded attempt has the earliest timestamp once the judging window closes (see
+ * `resolveBuzzWinner`). Still a transaction so a stale/duplicate/locked-out attempt is
+ * rejected server-side rather than silently overwriting a legitimate one.
  */
-export async function tryBuzz(roomCode: string, playerId: string, expectedToken: string): Promise<BuzzResult> {
+export async function recordBuzzAttempt(
+  roomCode: string,
+  playerId: string,
+  expectedToken: string,
+  pressedAtMs: number,
+): Promise<RecordAttemptResult> {
   const gameRef = doc(db, 'games', roomCode)
   try {
     await runTransaction(db, async (tx) => {
@@ -21,14 +27,10 @@ export async function tryBuzz(roomCode: string, playerId: string, expectedToken:
       if (!buzz.isOpen || buzz.winnerId !== null) throw new Error('already-decided')
       if (buzz.lockedOutPlayerIds.includes(playerId)) throw new Error('locked-out')
 
-      tx.update(gameRef, {
-        'buzz.winnerId': playerId,
-        'buzz.winnerAt': serverTimestamp(),
-        'buzz.isOpen': false,
-      })
+      tx.update(gameRef, { [`buzz.attempts.${playerId}`]: pressedAtMs })
     })
-    return 'won'
+    return 'recorded'
   } catch {
-    return 'lost'
+    return 'rejected'
   }
 }

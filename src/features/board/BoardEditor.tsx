@@ -163,7 +163,7 @@ export function BoardEditor() {
             <button
               key={r}
               onClick={() => setRound(r)}
-              className={`rounded-lg px-5 py-2.5 text-base font-semibold capitalize transition duration-150 ${
+              className={`cursor-pointer rounded-lg px-5 py-2.5 text-base font-semibold capitalize transition duration-150 ${
                 round === r
                   ? 'bg-crt-amber text-crt-bg shadow-md'
                   : 'text-crt-cream/70 hover:bg-crt-cream/10 hover:text-crt-cream'
@@ -188,7 +188,7 @@ export function BoardEditor() {
                   <button
                     key={clueIndex}
                     onClick={() => setEditing({ round, catIndex, clueIndex })}
-                    className={`${boardClueTile} relative bg-gradient-to-b from-crt-bg-light to-crt-bg text-crt-amber-light shadow-md shadow-black/20 hover:-translate-y-0.5 hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-crt-amber/70`}
+                    className={`${boardClueTile} relative cursor-pointer bg-gradient-to-b from-crt-bg-light to-crt-bg text-crt-amber-light shadow-md shadow-black/20 hover:-translate-y-0.5 hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-crt-amber/70`}
                   >
                     ${clue.value}
                     {clue.isDailyDouble && (
@@ -215,28 +215,28 @@ export function BoardEditor() {
             ))}
           </div>
         ) : (
-          <div className="max-w-lg space-y-4">
-            <label className="block text-sm text-crt-cream/70">
+          <div className="max-w-3xl space-y-6">
+            <label className="block text-base text-crt-cream/70">
               Category
               <input
-                className={`mt-1 w-full ${inputBase}`}
+                className={`mt-1.5 w-full ${inputBase} text-lg`}
                 value={board.finalJeopardy.category}
                 onChange={(e) => updateFinal({ category: e.target.value })}
               />
             </label>
-            <label className="block text-sm text-crt-cream/70">
+            <label className="block text-base text-crt-cream/70">
               Clue text
               <textarea
-                className={`mt-1 w-full ${inputBase}`}
-                rows={3}
+                className={`mt-1.5 w-full ${inputBase} text-lg`}
+                rows={4}
                 value={board.finalJeopardy.text}
                 onChange={(e) => updateFinal({ text: e.target.value })}
               />
             </label>
-            <label className="block text-sm text-crt-cream/70">
+            <label className="block text-base text-crt-cream/70">
               Image or video URL (optional)
               <input
-                className={`mt-1 w-full ${inputBase}`}
+                className={`mt-1.5 w-full ${inputBase} text-lg`}
                 value={board.finalJeopardy.imageUrl ?? ''}
                 onChange={(e) => {
                   setFinalImageError(false)
@@ -245,14 +245,14 @@ export function BoardEditor() {
                 placeholder="https://... (image, YouTube link, or .mp4)"
               />
               {finalImagePreviewUrl && (
-                <div className="mt-2 overflow-hidden rounded-lg border border-crt-cream/10 bg-black/20">
+                <div className="mt-3 overflow-hidden rounded-lg border border-crt-cream/10 bg-black/20">
                   {finalImageError ? (
-                    <p className="p-3 text-xs text-crt-cream/40">Couldn't load image from this URL</p>
+                    <p className="p-3 text-sm text-crt-cream/40">Couldn't load image from this URL</p>
                   ) : (
                     <img
                       src={finalImagePreviewUrl}
                       alt="Final Jeopardy preview"
-                      className="max-h-40 w-full object-contain"
+                      className="max-h-64 w-full object-contain"
                       onError={() => setFinalImageError(true)}
                       onLoad={() => setFinalImageError(false)}
                     />
@@ -262,10 +262,10 @@ export function BoardEditor() {
             </label>
             {board.finalJeopardy.imageUrl &&
               parseMediaUrl(board.finalJeopardy.imageUrl).kind !== 'image' && (
-                <label className="flex items-center justify-between text-sm text-crt-cream/70">
+                <label className="flex items-center justify-between text-base text-crt-cream/70">
                   <span>
                     Audio only for players
-                    <span className="block text-xs text-crt-cream/40">
+                    <span className="block text-sm text-crt-cream/40">
                       Players get a black screen with sound — you still see the video
                     </span>
                   </span>
@@ -276,7 +276,7 @@ export function BoardEditor() {
                     onClick={() =>
                       updateFinal({ hideVideoFromPlayers: !(board.finalJeopardy.hideVideoFromPlayers ?? false) })
                     }
-                    className={`relative h-6 w-11 shrink-0 rounded-full transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-crt-amber/60 ${
+                    className={`relative h-6 w-11 shrink-0 cursor-pointer rounded-full transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-crt-amber/60 ${
                       board.finalJeopardy.hideVideoFromPlayers ? 'bg-crt-amber' : 'bg-crt-cream/15'
                     }`}
                   >
@@ -288,10 +288,10 @@ export function BoardEditor() {
                   </button>
                 </label>
               )}
-            <label className="block text-sm text-crt-cream/70">
+            <label className="block text-base text-crt-cream/70">
               Correct answer
               <input
-                className={`mt-1 w-full ${inputBase}`}
+                className={`mt-1.5 w-full ${inputBase} text-lg`}
                 value={board.finalJeopardy.answer}
                 onChange={(e) => updateFinal({ answer: e.target.value })}
               />

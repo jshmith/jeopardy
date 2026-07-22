@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { useGameDoc, usePlayers, usePrivateBoard } from '../game/useGame'
 import { BoardGrid } from '../../components/BoardGrid'
@@ -6,13 +6,16 @@ import { Scoreboard } from '../../components/Scoreboard'
 import { ClueDisplay } from '../../components/ClueDisplay'
 import { Spinner } from '../../components/Spinner'
 import { btnCorrect, btnIncorrect, btnPrimary, btnQuiet, inputBase } from '../../lib/uiClasses'
+import { useClockOffsetMs } from '../../lib/serverClock'
 import {
   awardHostControlClue,
   backToBoard,
+  BUZZ_JUDGE_WINDOW_MS,
   forceRevealAnswer,
   judgeBuzzIn,
   judgeDailyDouble,
   openBuzzer,
+  resolveBuzzWinner,
   revealClue,
   revealDailyDoubleClue,
   setDailyDoubleController,
@@ -22,7 +25,7 @@ import {
 } from '../game/gameStateMachine'
 import { FinalJeopardyHost } from './FinalJeopardyHost'
 import { PitchGameHost } from '../pitch/PitchGameHost'
-import type { BoardClue, PrivateBoard, CurrentClue } from '../../types/game'
+import type { BoardClue, BuzzState, PrivateBoard, CurrentClue } from '../../types/game'
 
 function clueFromBoard(board: PrivateBoard, clue: CurrentClue): BoardClue {
   const category = (clue.round === 'double' ? board.doubleCategories : board.categories)[clue.categoryIndex]
@@ -36,7 +39,7 @@ function PeekAnswer({ answer }: { answer: string }) {
     <button
       onClick={() => setPinned((p) => !p)}
       title="Hover or tap to peek at the answer"
-      className="group w-full max-w-xl rounded-xl border border-crt-cream/10 bg-crt-cream/5 px-5 py-3 text-center transition hover:border-crt-cream/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-crt-amber/50"
+      className="group w-full max-w-xl cursor-pointer rounded-xl border border-crt-cream/10 bg-crt-cream/5 px-5 py-3 text-center transition hover:border-crt-cream/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-crt-amber/50"
     >
       <span className="mb-1 block text-[10px] font-semibold uppercase tracking-wider text-crt-cream/40">
         Answer — hover to peek
@@ -57,6 +60,7 @@ export function HostControl() {
   const game = useGameDoc(roomCode)
   const players = usePlayers(roomCode)
   const board = usePrivateBoard(roomCode)
+  const clockOffsetMs = useClockOffsetMs(game?.updatedAt)
 
   if (game === undefined || board === undefined)
     return (
@@ -138,7 +142,8 @@ export function HostControl() {
             answerText={answerText}
             players={players}
             controlPlayerId={game.controlPlayerId}
-            buzzWinnerId={game.buzz.winnerId}
+            buzz={game.buzz}
+            clockOffsetMs={clockOffsetMs}
             phase={game.phase}
             dailyDoubleControllingPlayerId={game.dailyDouble?.controllingPlayerId ?? null}
             dailyDoubleWager={game.dailyDouble?.wager ?? null}
@@ -157,7 +162,8 @@ type HostClueViewProps = {
   answerText: string
   players: ReturnType<typeof usePlayers>
   controlPlayerId: string | null
-  buzzWinnerId: string | null
+  buzz: BuzzState
+  clockOffsetMs: number
   phase: string
   dailyDoubleControllingPlayerId: string | null
   dailyDoubleWager: number | null
@@ -169,34 +175,86 @@ function HostClueView({
   clue,
   answerText,
   players,
-  buzzWinnerId,
+  buzz,
+  clockOffsetMs,
   phase,
   dailyDoubleControllingPlayerId,
   dailyDoubleWager,
   dailyDoubleWagerSubmitted,
 }: HostClueViewProps) {
   const [selectedController, setSelectedController] = useState('')
+  const [pickerOpen, setPickerOpen] = useState(false)
+  const pickerRef = useRef<HTMLDivElement>(null)
+  const buzzWinnerId = buzz.winnerId
+
+  useEffect(() => {
+    if (!pickerOpen) return
+    const handleClickOutside = (e: MouseEvent) => {
+      if (pickerRef.current && !pickerRef.current.contains(e.target as Node)) {
+        setPickerOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [pickerOpen])
+
+  // Once the judging window closes, pick whichever recorded buzz attempt was
+  // earliest — re-checked whenever a new attempt comes in, so a straggler that
+  // lands right at (or just after) the window's close still gets resolved.
+  const attemptCount = Object.keys(buzz.attempts ?? {}).length
+  useEffect(() => {
+    if (phase !== 'buzzer_open' || buzz.winnerId !== null) return
+    const windowCloseAt = buzz.opensAtMs + BUZZ_JUDGE_WINDOW_MS
+    const fire = () => {
+      if (attemptCount > 0) void resolveBuzzWinner(roomCode, buzz.token)
+    }
+    const delay = windowCloseAt - (Date.now() + clockOffsetMs)
+    if (delay <= 0) {
+      fire()
+      return
+    }
+    const t = setTimeout(fire, delay)
+    return () => clearTimeout(t)
+  }, [roomCode, phase, buzz.token, buzz.winnerId, buzz.opensAtMs, attemptCount, clockOffsetMs])
 
   if (phase === 'daily_double_wager') {
     const controller = players.find((p) => p.uid === dailyDoubleControllingPlayerId)
+    const selectedPlayer = players.find((p) => p.uid === selectedController)
     return (
       <div className="animate-clue-in rounded-2xl border border-crt-cream/10 bg-gradient-to-b from-crt-bg-light to-crt-bg p-8 text-center shadow-2xl shadow-black/40">
         <p className="mb-4 font-display text-3xl font-bold text-crt-amber-light">DAILY DOUBLE</p>
         {!dailyDoubleControllingPlayerId ? (
           <div className="mx-auto flex max-w-sm flex-col gap-3">
             <p className="text-crt-cream/80">Who found the Daily Double?</p>
-            <select
-              className={inputBase}
-              value={selectedController}
-              onChange={(e) => setSelectedController(e.target.value)}
-            >
-              <option value="">Select player…</option>
-              {players.map((p) => (
-                <option key={p.uid} value={p.uid}>
-                  {p.displayName}
-                </option>
-              ))}
-            </select>
+            <div ref={pickerRef} className="relative text-left">
+              <button
+                type="button"
+                onClick={() => setPickerOpen((o) => !o)}
+                className={`${inputBase} flex w-full cursor-pointer items-center justify-between gap-2`}
+              >
+                <span className={selectedPlayer ? '' : 'text-crt-cream/30'}>
+                  {selectedPlayer?.displayName ?? 'Select player…'}
+                </span>
+                <span className="text-crt-cream/50">▾</span>
+              </button>
+              {pickerOpen && (
+                <div className="absolute z-10 mt-2 w-full overflow-hidden rounded-lg border border-crt-cream/10 bg-crt-bg shadow-xl shadow-black/40">
+                  {players.map((p) => (
+                    <button
+                      key={p.uid}
+                      type="button"
+                      onClick={() => {
+                        setSelectedController(p.uid)
+                        setPickerOpen(false)
+                      }}
+                      className="block w-full cursor-pointer px-3 py-2.5 text-left text-crt-cream transition duration-150 hover:bg-crt-cream/10"
+                    >
+                      {p.displayName}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
             <button
               disabled={!selectedController}
               onClick={() => setDailyDoubleController(roomCode, selectedController)}
@@ -273,6 +331,9 @@ function HostClueView({
                 className={btnCorrect}
               >
                 {p.displayName}
+                {clue.allowTextInput && clue.textAnswers?.[p.uid] && (
+                  <span className="ml-2 font-normal text-white/80">&ldquo;{clue.textAnswers[p.uid]}&rdquo;</span>
+                )}
               </button>
             ))}
           </div>
@@ -282,7 +343,7 @@ function HostClueView({
           </button>
         </div>
       ) : phase === 'clue_revealed' ? (
-        <button onClick={() => openBuzzer(roomCode)} className={btnPrimary}>
+        <button onClick={() => openBuzzer(roomCode, clockOffsetMs)} className={btnPrimary}>
           Open Buzzers
         </button>
       ) : (
@@ -294,13 +355,13 @@ function HostClueView({
               </p>
               <div className="flex gap-3">
                 <button
-                  onClick={() => judgeBuzzIn(roomCode, buzzWinnerId, true, clue.value, answerText)}
+                  onClick={() => judgeBuzzIn(roomCode, buzzWinnerId, true, clue.value, answerText, clockOffsetMs)}
                   className={btnCorrect}
                 >
                   Correct
                 </button>
                 <button
-                  onClick={() => judgeBuzzIn(roomCode, buzzWinnerId, false, clue.value, answerText)}
+                  onClick={() => judgeBuzzIn(roomCode, buzzWinnerId, false, clue.value, answerText, clockOffsetMs)}
                   className={btnIncorrect}
                 >
                   Incorrect

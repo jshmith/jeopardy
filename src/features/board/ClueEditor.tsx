@@ -15,6 +15,7 @@ export function ClueEditor({ clue, onSave, onClose }: Props) {
   const [answer, setAnswer] = useState(clue.answer)
   const [isDailyDouble, setIsDailyDouble] = useState(clue.isDailyDouble)
   const [mode, setMode] = useState<ClueMode>(clue.mode ?? 'standard')
+  const [allowTextInput, setAllowTextInput] = useState(clue.allowTextInput ?? false)
   const [hideVideoFromPlayers, setHideVideoFromPlayers] = useState(clue.hideVideoFromPlayers ?? false)
 
   const trimmedUrl = imageUrl.trim()
@@ -35,6 +36,7 @@ export function ClueEditor({ clue, onSave, onClose }: Props) {
       answer: answer.trim(),
       isDailyDouble,
       mode,
+      allowTextInput,
       hideVideoFromPlayers: mediaIsVideo && hideVideoFromPlayers,
     })
     onClose()
@@ -102,7 +104,7 @@ export function ClueEditor({ clue, onSave, onClose }: Props) {
               role="switch"
               aria-checked={hideVideoFromPlayers}
               onClick={() => setHideVideoFromPlayers((v) => !v)}
-              className={`relative h-6 w-11 shrink-0 rounded-full transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-crt-amber/60 ${
+              className={`relative h-6 w-11 shrink-0 cursor-pointer rounded-full transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-crt-amber/60 ${
                 hideVideoFromPlayers ? 'bg-crt-amber' : 'bg-crt-cream/15'
               }`}
             >
@@ -129,7 +131,7 @@ export function ClueEditor({ clue, onSave, onClose }: Props) {
                 type="button"
                 disabled={isDailyDouble}
                 onClick={() => setMode(opt.value)}
-                className={`flex-1 rounded-lg px-3 py-1.5 text-sm font-semibold transition duration-150 ${
+                className={`flex-1 cursor-pointer rounded-lg px-3 py-1.5 text-sm font-semibold transition duration-150 disabled:cursor-not-allowed ${
                   mode === opt.value
                     ? 'bg-crt-amber text-crt-bg shadow-md'
                     : 'text-crt-cream/70 hover:bg-crt-cream/10 hover:text-crt-cream'
@@ -149,6 +151,32 @@ export function ClueEditor({ clue, onSave, onClose }: Props) {
           )}
         </div>
 
+        {mode === 'host_control' && !isDailyDouble && (
+          <label className="mb-4 flex items-center justify-between text-sm text-crt-cream/70">
+            <span>
+              Let players type an answer
+              <span className="block text-xs text-crt-cream/40">
+                Players get a text box to submit a guess — you still choose who gets the points
+              </span>
+            </span>
+            <button
+              type="button"
+              role="switch"
+              aria-checked={allowTextInput}
+              onClick={() => setAllowTextInput((v) => !v)}
+              className={`relative h-6 w-11 shrink-0 cursor-pointer rounded-full transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-crt-amber/60 ${
+                allowTextInput ? 'bg-crt-amber' : 'bg-crt-cream/15'
+              }`}
+            >
+              <span
+                className={`absolute left-0 top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform duration-200 ${
+                  allowTextInput ? 'translate-x-5' : 'translate-x-0.5'
+                }`}
+              />
+            </button>
+          </label>
+        )}
+
         <label className="mb-5 flex items-center justify-between text-sm text-crt-cream/70">
           Daily Double
           <button
@@ -156,7 +184,7 @@ export function ClueEditor({ clue, onSave, onClose }: Props) {
             role="switch"
             aria-checked={isDailyDouble}
             onClick={() => setIsDailyDouble((v) => !v)}
-            className={`relative h-6 w-11 shrink-0 rounded-full transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-crt-amber/60 ${
+            className={`relative h-6 w-11 shrink-0 cursor-pointer rounded-full transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-crt-amber/60 ${
               isDailyDouble ? 'bg-crt-amber' : 'bg-crt-cream/15'
             }`}
           >

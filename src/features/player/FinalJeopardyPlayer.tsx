@@ -11,9 +11,10 @@ type Props = {
   game: Game
   players: Player[]
   uid: string
+  clockOffsetMs: number
 }
 
-export function FinalJeopardyPlayer({ roomCode, game, players, uid }: Props) {
+export function FinalJeopardyPlayer({ roomCode, game, players, uid, clockOffsetMs }: Props) {
   const myWager = useMyFinalWager(roomCode, uid)
   const myAnswer = useMyFinalAnswer(roomCode, uid)
   const me = players.find((p) => p.uid === uid)
@@ -63,6 +64,7 @@ export function FinalJeopardyPlayer({ roomCode, game, players, uid }: Props) {
           uid={uid}
           clue={game.currentClue}
           videoSync={game.videoSync ?? null}
+          clockOffsetMs={clockOffsetMs}
           deadline={game.finalAnswerDeadline}
           submitted={!!myAnswer}
         />
@@ -124,6 +126,7 @@ function AnswerForm({
   uid,
   clue,
   videoSync,
+  clockOffsetMs,
   deadline,
   submitted,
 }: {
@@ -131,6 +134,7 @@ function AnswerForm({
   uid: string
   clue: Game['currentClue']
   videoSync: VideoSyncState | null
+  clockOffsetMs: number
   deadline: number | null
   submitted: boolean
 }) {
@@ -152,7 +156,7 @@ function AnswerForm({
 
   return (
     <div className="flex flex-col items-center gap-4">
-      <ClueDisplay clue={clue} video={{ role: 'viewer', sync: videoSync }} />
+      <ClueDisplay clue={clue} video={{ role: 'viewer', sync: videoSync, clockOffsetMs }} />
       <p className={`font-jeopardy text-2xl ${timeUp ? 'text-red-400' : 'text-crt-amber-light'}`}>{secondsLeft}s</p>
       <input
         value={answer}

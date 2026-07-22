@@ -48,7 +48,7 @@ export function HostGamePicker() {
               <li key={b.id} className="animate-fade-in-up">
                 <button
                   onClick={() => navigate(`/host/new-game/${b.id}`)}
-                  className={`flex w-full items-center justify-between p-4 text-left ${card} ${cardHover} focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-crt-amber/70`}
+                  className={`flex w-full cursor-pointer items-center justify-between p-4 text-left ${card} ${cardHover} focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-crt-amber/70`}
                 >
                   <span className="flex min-w-0 flex-col">
                     <span className="truncate font-semibold text-crt-cream">{b.name}</span>

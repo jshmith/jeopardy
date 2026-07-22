@@ -53,10 +53,12 @@ export async function createGame(hostUid: string, boardId: string): Promise<stri
     videoSync: null,
     buzz: {
       token: uuidv4(),
+      opensAtMs: 0,
       isOpen: false,
       winnerId: null,
       winnerAt: null,
       lockedOutPlayerIds: [],
+      attempts: {},
     },
     controlPlayerId: null,
     dailyDouble: null,

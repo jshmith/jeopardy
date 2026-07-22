@@ -6,7 +6,7 @@ import type { CurrentClue, VideoSyncState } from '../types/game'
  * or a player (video follows the host's state). */
 export type VideoContext =
   | { role: 'host'; roomCode: string }
-  | { role: 'viewer'; sync: VideoSyncState | null }
+  | { role: 'viewer'; sync: VideoSyncState | null; clockOffsetMs: number }
 
 type Props = {
   clue: CurrentClue
@@ -20,12 +20,13 @@ function ClueMedia({ url, video, audioOnly }: { url: string; video?: VideoContex
       <img
         src={source.url}
         alt=""
-        className="crt-media-safe max-h-80 max-w-full rounded-xl object-contain shadow-lg"
+        className="crt-media-safe h-auto max-h-[28rem] w-full max-w-2xl rounded-xl object-contain shadow-lg"
       />
     )
   }
   if (video?.role === 'host') return <HostVideo url={url} roomCode={video.roomCode} />
-  if (video?.role === 'viewer') return <ViewerVideo url={url} sync={video.sync} audioOnly={audioOnly} />
+  if (video?.role === 'viewer')
+    return <ViewerVideo url={url} sync={video.sync} clockOffsetMs={video.clockOffsetMs} audioOnly={audioOnly} />
   // No sync context supplied — plain playback fallback.
   if (source.kind === 'youtube') {
     return (

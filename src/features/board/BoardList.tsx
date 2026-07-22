@@ -130,7 +130,7 @@ export function BoardList() {
                       <button
                         onClick={() => startRename(b)}
                         title="Rename board"
-                        className="rounded p-1 text-crt-cream/40 transition hover:bg-crt-cream/10 hover:text-crt-cream focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-crt-cream/30"
+                        className="cursor-pointer rounded p-1 text-crt-cream/40 transition hover:bg-crt-cream/10 hover:text-crt-cream focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-crt-cream/30"
                       >
                         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                           <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" />
@@ -148,7 +148,7 @@ export function BoardList() {
                       <span className="text-sm text-crt-cream/60">Delete this board?</span>
                       <button
                         onClick={() => handleDelete(b.id)}
-                        className="rounded-lg bg-red-600/90 px-3 py-1.5 text-sm font-semibold text-white transition hover:bg-red-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400/70"
+                        className="cursor-pointer rounded-lg bg-red-600/90 px-3 py-1.5 text-sm font-semibold text-white transition hover:bg-red-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400/70"
                       >
                         Delete
                       </button>
